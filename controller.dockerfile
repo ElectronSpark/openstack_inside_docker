@@ -16,6 +16,15 @@ ENV NOVA_DBPASS="password"
 ENV NOVA_METADATA_SECRET="secret"
 ENV NEUTRON_DBPASS="password"
 
+ENV OS_USERNAME="admin"
+ENV OS_PASSWORD="${KEYSTONE_DBPASS}"
+ENV OS_PROJECT_NAME="admin"
+ENV OS_USER_DOMAIN_NAME="Default"
+ENV OS_PROJECT_DOMAIN_NAME="Default"
+ENV OS_AUTH_URL="http://controller:5000/v3"
+ENV OS_IDENTITY_API_VERSION="3"
+
+
 # add openstack user
 RUN apt update -y
 RUN apt install -y sudo

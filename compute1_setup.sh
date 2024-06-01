@@ -23,8 +23,9 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre0 -- \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.11
-ip address del ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_DEVICE}
 ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
+ovs-vsctl set int gre0 mtu_request=8958
+ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 # ip link add br-provider link eth1 type macvlan  mode bridge
@@ -41,53 +42,20 @@ ip link set dev ${PROVIDER_INTERFACE_NAME} up
 echo "configuring neutron network service"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
-crudini --set /etc/neutron/neutron.conf DEFAULT \
-    auth_strategy "keystone"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    auth_url "http://controller:5000"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    memcached_servers "controller:11211"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    auth_type "password"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    project_domain_name "default"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    user_domain_name "default"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    project_name "service"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    username "neutron"
-crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    password "${NEUTRON_DBPASS}"
 crudini --set /etc/neutron/neutron.conf oslo_concurrency \
     lock_path "/var/lib/neutron/tmp"
 
 
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge \
-#     physical_interface_mappings "provider:${PROVIDER_INTERFACE_DEVICE}"
+
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
     bridge_mappings "provider:${PROVIDER_INTERFACE_NAME}"
-# --- provider
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     enable_vxlan "false"
-# --- self-service
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     enable_vxlan "true"
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     local_ip "${LOCAL_INT_IP}"
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     l2_population "true"
-crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan \
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
     local_ip "${LOCAL_INT_IP}"
-crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan \
+
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
+    tunnel_types "vxlan"
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
     l2_population "true"
-# ---
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup \
-#     enable_security_group "true"
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup \
-#     firewall_driver "neutron.agent.linux.iptables_firewall.IptablesFirewallDriver"
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
     enable_security_group "true"
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
@@ -199,7 +167,6 @@ netcat -l 8000
 service nova-compute restart
 # service neutron-linuxbridge-agent restart
 service neutron-openvswitch-agent restart
-service nova-novncproxy start
 
 service dbus start
 service dnsmasq start

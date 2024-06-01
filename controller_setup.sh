@@ -30,8 +30,9 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre0 -- \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.31
-ip address del ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_DEVICE}
 ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
+ovs-vsctl set int gre0 mtu_request=8958
+ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 # ip link add br-provider link eth1 type macvlan  mode bridge
@@ -552,6 +553,14 @@ service neutron-metadata-agent restart
 crudini --set /etc/nova/nova-compute.conf libvirt \
     virt_type "qemu"
 
+service dbus start
+service dnsmasq start
+service haproxy start
+service memcached start
+service rabbitmq-server start
+# notice compute node
+echo -n "ok" | netcat compute1 8000 -q 1
+
 sleep 5
 
 echo "creating new network..."
@@ -578,16 +587,9 @@ apt install -y openstack-dashboard
 
 cp local_settings.py /etc/openstack-dashboard/local_settings.py
 chown horizon:horizon /etc/openstack-dashboard/local_settings.py
-service restart apache2
-
+service apache2 restart
 service apache-htcacheclean start
-service dbus start
-service dnsmasq start
-service haproxy start
-service memcached start
-service rabbitmq-server start
 
-echo -n "ok" | netcat compute1 8000
 
 if [ ! -e "finish_entrypoint.sh" ]; then
 cat > finish_entrypoint.sh << EOF

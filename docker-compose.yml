@@ -21,10 +21,8 @@ services:
       - "80:80"
       - "6080:6080"
     networks:
-      mgmt:
+      external:
         ipv4_address: 10.100.0.11
-      provider:
-        ipv4_address: 10.0.0.11
     extra_hosts:
       - "compute1:10.0.0.31"
 
@@ -49,38 +47,13 @@ services:
     devices:
       - "/dev/kvm"
     networks:
-      mgmt:
+      external:
         ipv4_address: 10.100.0.31
-      provider:
-        ipv4_address: 10.0.0.31
     extra_hosts:
       - "controller:10.0.0.11"
 
 networks:
-  provider:
-    attachable: true
-    internal: false
-    driver: macvlan
-    driver_opts:
-      com.docker.network.bridge.name: provider
-      macvlan_mode: bridge
-      parent: eth0
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.0.0.0/24
-
-  # provider:
-  #   attachable: true
-  #   driver: bridge
-  #   driver_opts:
-  #     com.docker.network.bridge.name: provider
-  #   ipam:
-  #     driver: default
-  #     config:
-  #       - subnet: 10.0.0.0/24
-
-  mgmt:
+  external:
     attachable: true
     driver_opts:
       com.docker.network.bridge.name: mgmt
