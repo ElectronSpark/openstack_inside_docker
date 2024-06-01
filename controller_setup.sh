@@ -1,13 +1,5 @@
 #!/bin/bash
 
-export OS_USERNAME=admin
-export OS_PASSWORD=${KEYSTONE_DBPASS}
-export OS_PROJECT_NAME=admin
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_DOMAIN_NAME=Default
-export OS_AUTH_URL=http://controller:5000/v3
-export OS_IDENTITY_API_VERSION=3
-
 # libvirt related
 # /usr/bin/tini /usr/sbin/libvirtd
 
@@ -25,26 +17,15 @@ su -s /bin/bash -c "openssl rand -hex 10" openstack
 # create br-provider interface
 service openvswitch-switch start
 ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre0 -- \
-    set interface gre0 type=gre \
+ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
+    set interface ${TUNNEL_INTERFACE_NAME} type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.31
 ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl set int gre0 mtu_request=8958
+ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
-
-# ip link add br-provider link eth1 type macvlan  mode bridge
-# ip address del ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_DEVICE}
-# ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-# ip link set dev ${PROVIDER_INTERFACE_NAME} up
-
-# ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
-# ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${PROVIDER_INTERFACE_DEVICE}
-# ip address del ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_DEVICE}
-# ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-# ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 # configure mysql database
 echo "initializing mysql mariadb..."
@@ -69,7 +50,16 @@ service rabbitmq-server restart
 rabbitmqctl add_user openstack ${RABBIT_PASS}
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
 
-echo "restarting service etcd..."
+echo "configuring ETCD..."
+sed -i "s/^.*ETCD_NAME=.*$/ETCD_NAME=\"controller\"/g"   /etc/default/etcd
+sed -i "s/^.*ETCD_DATA_DIR=.*$/ETCD_DATA_DIR=\"\/var\/lib\/etcd\"/g"    /etc/default/etcd
+sed -i "s/^.*ETCD_INITIAL_CLUSTER_STATE=.*$/ETCD_INITIAL_CLUSTER_STATE=\"new\"/g"    /etc/default/etcd
+sed -i "s/^.*ETCD_INITIAL_CLUSTER_TOKEN=.*$/ETCD_INITIAL_CLUSTER_TOKEN=\"etcd-cluster-01\"/g"    /etc/default/etcd
+sed -i "s/^.*ETCD_INITIAL_CLUSTER=.*$/ETCD_INITIAL_CLUSTER=\"controller=http:\/\/${LOCAL_INT_IP}:2380\"/g" /etc/default/etcd
+sed -i "s/^.*ETCD_INITIAL_ADVERTISE_PEER_URLS=.*$/ETCD_INITIAL_ADVERTISE_PEER_URLS=\"http:\/\/${LOCAL_INT_IP}:2380\"/g"    /etc/default/etcd
+sed -i "s/^.*ETCD_ADVERTISE_CLIENT_URLS=.*$/ETCD_ADVERTISE_CLIENT_URLS=\"http:\/\/${LOCAL_INT_IP}:2379\"/g"    /etc/default/etcd
+sed -i "s/^.*ETCD_LISTEN_PEER_URLS=.*$/ETCD_LISTEN_PEER_URLS=\"http:\/\/0.0.0.0:2380\"/g"  /etc/default/etcd
+sed -i "s/^.*ETCD_LISTEN_CLIENT_URLS=.*$/ETCD_LISTEN_CLIENT_URLS=\"http:\/\/${LOCAL_INT_IP}:2379\"/g"  /etc/default/etcd
 systemctl enable etcd
 service etcd restart
 
@@ -126,7 +116,7 @@ crudini --set /etc/keystone/keystone.conf token provider "fernet"
 su -s /bin/sh -c "keystone-manage db_sync" keystone
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
-keystone-manage bootstrap --bootstrap-password ${KEYSTONE_DBPASS} \
+keystone-manage bootstrap --bootstrap-password ${KEYSTONE_PASS} \
   --bootstrap-admin-url http://controller:5000/v3/ \
   --bootstrap-internal-url http://controller:5000/v3/ \
   --bootstrap-public-url http://controller:5000/v3/ \
@@ -135,19 +125,16 @@ echo "ServerName controller" >> /etc/apache2/apache2.conf
 service apache2 restart
 
 # . /home/openstack/admin_openrc
-openstack --os-identity-api-version 3 domain create --description "An Example Domain" example
-openstack --os-identity-api-version 3 project create --domain default \
-  --description "Service Project" service
-openstack --os-identity-api-version 3 project create --domain default \
-  --description "Demo Project" myproject
-openstack --os-identity-api-version 3 user create --domain default \
-  --password password myuser
-openstack --os-identity-api-version 3 role create myrole
-openstack --os-identity-api-version 3 role add --project myproject --user myuser myrole
+openstack domain create --description "An Example Domain" example
+openstack project create --domain default --description "Service Project" service
+openstack project create --domain default --description "Demo Project" myproject
+openstack user create --domain default --password password myuser
+openstack role create myrole
+openstack role add --project myproject --user myuser myrole
 
 # configure glance
 echo configuring glance image service...
-openstack user create --domain default --password ${GLANCE_DBPASS} glance
+openstack user create --domain default --password ${GLANCE_PASS} glance
 openstack role add --project service --user glance admin
 openstack service create --name glance \
   --description "OpenStack Image" image
@@ -158,6 +145,7 @@ openstack endpoint create --region RegionOne \
 openstack endpoint create --region RegionOne \
   image admin http://controller:9292
 
+# get glance endpoint id
 GLANCE_ENDPOINT_ID=$(openstack endpoint list | awk '
   BEGIN { FS = " *\\| *"; OFS = "|" }
   /glance/ && /admin/ {
@@ -184,7 +172,7 @@ crudini --set /etc/glance/glance-api.conf keystone_authtoken \
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
     username "glance"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
-    password "${GLANCE_DBPASS}"
+    password "${GLANCE_PASS}"
 crudini --set /etc/glance/glance-api.conf paste_deploy \
     flavor "keystone"
 crudini --set /etc/glance/glance-api.conf glance_store \
@@ -225,7 +213,7 @@ glance image-create --name "cirros" \
 
 # configure placement
 echo "configuring placement..."
-openstack user create --domain default --password ${PLACEMENT_DBPASS} placement
+openstack user create --domain default --password ${PLACEMENT_PASS} placement
 openstack role add --project service --user placement admin
 openstack service create --name placement \
   --description "Placement API" placement
@@ -255,7 +243,7 @@ crudini --set /etc/placement/placement.conf keystone_authtoken \
 crudini --set /etc/placement/placement.conf keystone_authtoken \
     username "placement"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
-    password "${PLACEMENT_DBPASS}"
+    password "${PLACEMENT_PASS}"
 
 su -s /bin/sh -c "placement-manage db sync" placement
 service apache2 restart
@@ -266,7 +254,7 @@ openstack --os-placement-api-version 1.6 trait list --sort-column name
 
 # configuring neutron network service
 echo "configuring neutron..."
-openstack user create --domain default --password ${NEUTRON_DBPASS} neutron
+openstack user create --domain default --password ${NEUTRON_PASS} neutron
 openstack role add --project service --user neutron admin
 openstack service create --name neutron \
   --description "OpenStack Networking" network
@@ -281,15 +269,10 @@ crudini --set /etc/neutron/neutron.conf database \
     connection "mysql+pymysql://neutron:${NEUTRON_DBPASS}@controller/neutron"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     core_plugin "ml2"
-# --- provider
-# crudini --set /etc/neutron/neutron.conf DEFAULT \
-#     service_plugins
-# --- self-service
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     service_plugins "router,segments"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     allow_overlapping_ips "true"
-# ---
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
@@ -315,7 +298,7 @@ crudini --set /etc/neutron/neutron.conf keystone_authtoken \
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
     username "neutron"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    password "${NEUTRON_DBPASS}"
+    password "${NEUTRON_PASS}"
 crudini --set /etc/neutron/neutron.conf nova \
     auth_url "http://controller:5000"
 crudini --set /etc/neutron/neutron.conf nova \
@@ -331,75 +314,44 @@ crudini --set /etc/neutron/neutron.conf nova \
 crudini --set /etc/neutron/neutron.conf nova \
     username "nova"
 crudini --set /etc/neutron/neutron.conf nova \
-    password "${NOVA_DBPASS}"
+    password "${NOVA_PASS}"
 crudini --set /etc/neutron/neutron.conf oslo_concurrency \
     lock_path "/var/lib/neutron/tmp"
 
-# --- provider
-# crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
-#     type_drivers "flat,vlan"
-# crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
-#     tenant_network_types
-# crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
-#     mechanism_drivers "linuxbridge"
-# --- self-service
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
     type_drivers "flat,vlan,vxlan"
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
     tenant_network_types "vxlan"
-# crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
-#     mechanism_drivers "linuxbridge,l2population"
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
     mechanism_drivers "openvswitch,l2population"
-# ---
+
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 \
     extension_drivers "port_security"
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat \
     flat_networks "provider"
-# --- self-service
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan \
     vni_ranges "1:1000"
-# ---
+
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup \
     enable_ipset "true"
 
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge \
-#     physical_interface_mappings "provider:${PROVIDER_INTERFACE_DEVICE}"
+
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
     bridge_mappings "provider:${PROVIDER_INTERFACE_NAME}"
-# --- provider
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     enable_vxlan "false"
-# --- self-service
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     enable_vxlan "true"
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     local_ip "${LOCAL_INT_IP}"
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan \
-#     l2_population "true"
+
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan \
     local_ip "${LOCAL_INT_IP}"
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan \
     l2_population "true"
-# ---
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup \
-#     enable_security_group "true"
-# crudini --set /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup \
-#     firewall_driver "neutron.agent.linux.iptables_firewall.IptablesFirewallDriver"
+
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini \
     enable_security_group "true"
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini \
     firewall_driver "openvswitch"
 
-# --- self-service
-# crudini --set /etc/neutron/l3_agent.ini DEFAULT \
-#     interface_driver "linuxbridge"
 crudini --set /etc/neutron/l3_agent.ini DEFAULT \
     interface_driver "openvswitch"
-# ---
 
-# crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
-#     interface_driver "linuxbridge"
 crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
     interface_driver "openvswitch"
 crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
@@ -427,7 +379,7 @@ crudini --set /etc/nova/nova.conf neutron \
 crudini --set /etc/nova/nova.conf neutron \
     username "neutron"
 crudini --set /etc/nova/nova.conf neutron \
-    password "${NEUTRON_DBPASS}"
+    password "${NEUTRON_PASS}"
 crudini --set /etc/nova/nova.conf neutron \
     service_metadata_proxy "true"
 crudini --set /etc/nova/nova.conf neutron \
@@ -435,7 +387,7 @@ crudini --set /etc/nova/nova.conf neutron \
 
 # restart neutron services after configuring nova
 echo "configuring nova compute service..."
-openstack user create --domain default --password ${NOVA_DBPASS} nova
+openstack user create --domain default --password ${NOVA_PASS} nova
 openstack role add --project service --user nova admin
 openstack service create --name nova \
   --description "OpenStack Compute" compute
@@ -473,7 +425,7 @@ crudini --set /etc/nova/nova.conf keystone_authtoken \
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     username "nova"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    password "${NOVA_DBPASS}"
+    password "${NOVA_PASS}"
 
 crudini --set /etc/nova/nova.conf service_user \
     send_service_user_token "true"
@@ -494,7 +446,7 @@ crudini --set /etc/nova/nova.conf service_user \
 crudini --set /etc/nova/nova.conf service_user \
     username "nova"
 crudini --set /etc/nova/nova.conf service_user \
-    password "${NOVA_DBPASS}"
+    password "${NOVA_PASS}"
 
 crudini --set /etc/nova/nova.conf vnc \
     enabled "true"
@@ -523,7 +475,7 @@ crudini --set /etc/nova/nova.conf placement \
 crudini --set /etc/nova/nova.conf placement \
     username "placement"
 crudini --set /etc/nova/nova.conf placement \
-    password "${PLACEMENT_DBPASS}"
+    password "${PLACEMENT_PASS}"
 
 crudini --set /etc/nova/nova.conf scheduler \
     discover_hosts_in_cells_interval "300"
@@ -569,8 +521,9 @@ openstack network create  --share --external \
   --provider-network-type flat provider
 openstack subnet create --network provider \
   --allocation-pool start=10.0.0.64,end=10.0.0.250 \
-  --dns-nameserver 8.8.4.4 --gateway 10.0.0.1 \
-  --subnet-range 10.0.0.0/24 provider
+  --dns-nameserver 8.8.4.4 --gateway ${LOCAL_NETWORK_GATEWAY} \
+  --subnet-range ${LOCAL_NETWORK} \
+  provider
 openstack network create selfservice
 openstack subnet create --network selfservice \
   --dns-nameserver 8.8.4.4 --gateway 172.16.1.1 \

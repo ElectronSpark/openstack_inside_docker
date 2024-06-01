@@ -1,13 +1,5 @@
 #!/bin/bash
 
-export OS_USERNAME=admin
-export OS_PASSWORD=${KEYSTONE_DBPASS}
-export OS_PROJECT_NAME=admin
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_DOMAIN_NAME=Default
-export OS_AUTH_URL=http://controller:5000/v3
-export OS_IDENTITY_API_VERSION=3
-
 # libvirt related
 # /usr/bin/tini /usr/sbin/libvirtd
 
@@ -18,26 +10,16 @@ fi
 service openvswitch-switch start
 ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
 # ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre0 -- set interface gre0 type=gre options:remote_ip=10.100.0.11
-ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre0 -- \
-    set interface gre0 type=gre \
+ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
+    set interface ${TUNNEL_INTERFACE_NAME} type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.11
 ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl set int gre0 mtu_request=8958
+ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
-# ip link add br-provider link eth1 type macvlan  mode bridge
-# ip address del ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_DEVICE}
-# ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-# ip link set dev ${PROVIDER_INTERFACE_NAME} up
-
-# ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
-# ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${PROVIDER_INTERFACE_DEVICE}
-# ip address del ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_DEVICE}
-# ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-# ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 echo "configuring neutron network service"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
@@ -103,7 +85,7 @@ crudini --set /etc/nova/nova.conf keystone_authtoken \
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     username "nova"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    password "${NOVA_DBPASS}"
+    password "${NOVA_PASS}"
 
 crudini --set /etc/nova/nova.conf service_user \
     send_service_user_token "true"
@@ -124,7 +106,7 @@ crudini --set /etc/nova/nova.conf service_user \
 crudini --set /etc/nova/nova.conf service_user \
     username "nova"
 crudini --set /etc/nova/nova.conf service_user \
-    password "${NOVA_DBPASS}"
+    password "${NOVA_PASS}"
 
 crudini --set /etc/nova/nova.conf vnc \
     enabled "true"
@@ -133,7 +115,7 @@ crudini --set /etc/nova/nova.conf vnc \
 crudini --set /etc/nova/nova.conf vnc \
     server_proxyclient_address "\$my_ip"
 crudini --set /etc/nova/nova.conf vnc \
-    novncproxy_base_url "http://controller:6080/vnc_auto.html"
+    novncproxy_base_url "http://localhost:6080/vnc_auto.html"
 
 crudini --set /etc/nova/nova.conf glance \
     api_servers "http://controller:9292"
@@ -156,7 +138,7 @@ crudini --set /etc/nova/nova.conf placement \
 crudini --set /etc/nova/nova.conf placement \
     username "placement"
 crudini --set /etc/nova/nova.conf placement \
-    password "${PLACEMENT_DBPASS}"
+    password "${PLACEMENT_PASS}"
 
 ############################################
 crudini --set /etc/nova/nova-compute.conf libvirt \
@@ -175,9 +157,8 @@ if [ ! -e "finish_entrypoint.sh" ]; then
 cat > finish_entrypoint.sh << EOF
 #!/bin/bash
 
-libvirtd
 /bin/bash
 EOF
 chmod 755 ./finish_entrypoint.sh
 fi
-bash ./finish_entrypoint.sh
+libvirtd & bash ./finish_entrypoint.sh
