@@ -15,8 +15,6 @@ services:
     volumes:
         - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
         - '/sys/fs/cgroup:/sys/fs/cgroup'
-    devices:
-      - "/dev/kvm"
     ports:
       - "80:80"
       - "6080:6080"
@@ -32,7 +30,7 @@ services:
       dockerfile: compute1.dockerfile
     depends_on:
       - controller
-    command: ["bash", "compute1_setup.sh"]
+    command: ["tini", "/root/compute1_setup.sh"]
     stdin_open: true
     tty: true
     privileged: true
@@ -44,8 +42,8 @@ services:
     volumes:
         - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
         - '/sys/fs/cgroup:/sys/fs/cgroup'
-    devices:
-      - "/dev/kvm"
+    # devices:
+      # - "/dev/kvm"
     networks:
       external:
         ipv4_address: 10.100.0.31

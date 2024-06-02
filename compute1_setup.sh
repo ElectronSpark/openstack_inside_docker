@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# libvirt related
-# /usr/bin/tini /usr/sbin/libvirtd
-
 if [ -e "./finish_entrypoint.sh" ]; then
     bash ./finish_entrypoint.sh
 fi
+
+service dbus start
+service dnsmasq start
+
+# libvirt related
+usermod -G kvm -a "nova"
+chown root:kvm /dev/kvm
+libvirtd &
 
 service openvswitch-switch start
 ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
@@ -141,17 +146,14 @@ crudini --set /etc/nova/nova.conf placement \
     password "${PLACEMENT_PASS}"
 
 ############################################
-crudini --set /etc/nova/nova-compute.conf libvirt \
-    virt_type "qemu"
+# crudini --set /etc/nova/nova-compute.conf libvirt \
+#     virt_type "qemu"
 
 netcat -l 8000
 
 service nova-compute restart
 # service neutron-linuxbridge-agent restart
 service neutron-openvswitch-agent restart
-
-service dbus start
-service dnsmasq start
 
 if [ ! -e "finish_entrypoint.sh" ]; then
 cat > finish_entrypoint.sh << EOF
@@ -161,4 +163,5 @@ cat > finish_entrypoint.sh << EOF
 EOF
 chmod 755 ./finish_entrypoint.sh
 fi
-libvirtd & bash ./finish_entrypoint.sh
+# libvirtd & bash ./finish_entrypoint.sh
+bash ./finish_entrypoint.sh

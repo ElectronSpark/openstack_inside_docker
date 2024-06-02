@@ -54,7 +54,8 @@ RUN sed -i "/^pool .* iburst maxsources [0-9]$/d" /etc/chrony/chrony.conf
 RUN echo "server controller iburst" >> /etc/chrony/chrony.conf
 RUN service chrony restart
 
-RUN apt install -y nova-compute 
+RUN apt install -y nova-compute-kvm nova-compute 
+# RUN apt install -y nova-compute 
 # RUN apt install -y neutron-linuxbridge-agent
 RUN apt install -y neutron-openvswitch-agent
 
@@ -68,6 +69,8 @@ RUN apt install -y libvirt-clients libvirt-daemon-system ovmf qemu-efi \
 
 RUN sed -i '/^#stdio_handler/ a\stdio_handler = "file"' /etc/libvirt/qemu.conf
 
+RUN echo "KERNEL==\"kvm\", GROUP=\"kvm\", MODE=\"0660\"" > /etc/udev/rules.d/99-kvm.rules
+
 COPY config/pools/* /etc/libvirt/storage/
 COPY config/networks/* /etc/libvirt/qemu/networks/
 RUN mkdir -p /etc/libvirt/storage/autostart /etc/libvirt/qemu/networks/autostart && \
@@ -79,6 +82,7 @@ RUN mkdir -p /etc/libvirt/storage/autostart /etc/libvirt/qemu/networks/autostart
     done
 
 WORKDIR /root
+RUN apt autoclean -y & apt autoremove -y
 ADD --chown=root:root compute1_setup.sh /root/compute1_setup.sh
 ADD --chown=openstack:openstack admin_openrc /home/openstack/admin_openrc
 ADD --chown=openstack:openstack demo_openrc /home/openstack/demo_openrc

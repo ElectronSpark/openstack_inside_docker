@@ -64,7 +64,6 @@ RUN apt install -y rabbitmq-server
 
 # install memcached
 RUN apt install -y memcached python3-memcache
-RUN sed -i "s/^-l 127.0.0.1$/-l ${LOCAL_INT_IP}/g" /etc/memcached.conf
 
 WORKDIR /root
 USER root
@@ -88,25 +87,13 @@ RUN apt install -y vim iputils-ping tcpdump
 # libvirt related
 RUN apt-get -y install bridge-utils dmidecode dnsmasq ebtables \
     iproute2 iptables 
-RUN apt install -y libvirt-clients libvirt-daemon-system \
-    ovmf qemu-efi qemu-kvm tini qemu
 
-RUN sed -i '/^#stdio_handler/ a\stdio_handler = "file"' /etc/libvirt/qemu.conf
-
-COPY config/pools/* /etc/libvirt/storage/
-COPY config/networks/* /etc/libvirt/qemu/networks/
-RUN mkdir -p /etc/libvirt/storage/autostart /etc/libvirt/qemu/networks/autostart && \
-    for pool in /etc/libvirt/storage/*.xml; do \
-        ln -sf "../${pool##*/}" /etc/libvirt/storage/autostart/; \
-    done && \
-    for net in /etc/libvirt/qemu/networks/*.xml; do \
-        ln -sf "../${net##*/}" /etc/libvirt/qemu/networks/autostart/; \
-    done
-
+WORKDIR /root
+RUN apt autoclean -y & apt autoremove -y
 ADD --chown=root:root controller_sql.sql /root/controller_sql.sql
 ADD --chown=openstack:openstack admin_openrc /home/openstack/admin_openrc
 ADD --chown=openstack:openstack demo_openrc /home/openstack/demo_openrc
 ADD --chown=root:root controller_setup.sh /root/controller_setup.sh
 ADD --chown=root:root config/openstack_dashboard/local_settings.py /root/local_settings.py
-# WORKDIR /home/openstack
-# USER openstack
+ADD --chown=root:root http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img \
+    /root/cirros-0.4.0-x86_64-disk.img

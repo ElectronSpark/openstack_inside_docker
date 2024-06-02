@@ -14,6 +14,10 @@ cat /tmp/hosts.new > /etc/hosts
 
 su -s /bin/bash -c "openssl rand -hex 10" openstack
 
+service dbus start
+service dnsmasq start
+service haproxy start
+
 # create br-provider interface
 service openvswitch-switch start
 ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
@@ -49,6 +53,10 @@ echo "adding user openstack to rabbitmq..."
 service rabbitmq-server restart
 rabbitmqctl add_user openstack ${RABBIT_PASS}
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+
+echo "configuring memcached..."
+sed -i "s/^-l 127.0.0.1$/-l ${LOCAL_INT_IP}/g" /etc/memcached.conf
+service memcached start
 
 echo "configuring ETCD..."
 sed -i "s/^.*ETCD_NAME=.*$/ETCD_NAME=\"controller\"/g"   /etc/default/etcd
@@ -197,15 +205,15 @@ crudini --set /etc/glance/glance-api.conf oslo_limit \
     endpoint_id "${GLANCE_ENDPOINT_ID}"
 crudini --set /etc/glance/glance-api.conf oslo_limit \
     region_name "RegionOne"
-
-openstack role add --user glance --user-domain Default --system all reader
-
 crudini --set /etc/glance/glance-api.conf DEFAULT \
     use_keystone_quotas "True"
 
+openstack role add --user glance --user-domain Default --system all reader
+
 su -s /bin/sh -c "glance-manage db_sync" glance
 service glance-api restart
-wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+# wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+sleep 5
 glance image-create --name "cirros" \
   --file cirros-0.4.0-x86_64-disk.img \
   --disk-format qcow2 --container-format bare \
@@ -501,19 +509,12 @@ service neutron-openvswitch-agent restart
 service neutron-dhcp-agent restart
 service neutron-metadata-agent restart
 
-##########################################3
-crudini --set /etc/nova/nova-compute.conf libvirt \
-    virt_type "qemu"
 
-service dbus start
-service dnsmasq start
-service haproxy start
-service memcached start
-service rabbitmq-server start
 # notice compute node
 echo -n "ok" | netcat compute1 8000 -q 1
 
 sleep 5
+su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
 
 echo "creating new network..."
 openstack network create  --share --external \
