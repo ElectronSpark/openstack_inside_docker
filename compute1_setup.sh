@@ -145,9 +145,13 @@ crudini --set /etc/nova/nova.conf placement \
 crudini --set /etc/nova/nova.conf placement \
     password "${PLACEMENT_PASS}"
 
-############################################
-# crudini --set /etc/nova/nova-compute.conf libvirt \
-#     virt_type "qemu"
+# enable kvm
+crudini --set /etc/nova/nova-compute.conf DEFAULT \
+    compute_driver "libvirt.LibvirtDriver"
+crudini --set /etc/nova/nova-compute.conf libvirt \
+    virt_type "kvm"
+crudini --set /etc/nova/nova-compute.conf libvirt \
+    cpu_mode "host-passthrough"
 
 netcat -l 8000
 

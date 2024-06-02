@@ -55,17 +55,14 @@ RUN echo "server controller iburst" >> /etc/chrony/chrony.conf
 RUN service chrony restart
 
 RUN apt install -y nova-compute-kvm nova-compute 
-# RUN apt install -y nova-compute 
-# RUN apt install -y neutron-linuxbridge-agent
+
 RUN apt install -y neutron-openvswitch-agent
 
 RUN apt install -y vim iputils-ping tcpdump
 
 RUN apt-get -y install bridge-utils dmidecode dnsmasq ebtables \
     iproute2 iptables 
-# libvirt related
-RUN apt install -y libvirt-clients libvirt-daemon-system ovmf qemu-efi \
-    qemu-kvm tini qemu
+RUN apt install -y tini
 
 RUN sed -i '/^#stdio_handler/ a\stdio_handler = "file"' /etc/libvirt/qemu.conf
 
