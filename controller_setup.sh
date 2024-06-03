@@ -31,6 +31,9 @@ ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
+# controller node as the default gateway of the provider's network
+sysctl -w net.ipv4.ip_forward=1
+
 # configure mysql database
 echo "initializing mysql mariadb..."
 
