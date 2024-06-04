@@ -34,6 +34,10 @@ ip link set dev ${PROVIDER_INTERFACE_NAME} up
 # controller node as the default gateway of the provider's network
 sysctl -w net.ipv4.ip_forward=1
 
+iptables -t nat -A POSTROUTING -o ${PROVIDER_INTERFACE_NAME} -j MASQUERADE
+iptables -A FORWARD -i ${PROVIDER_INTERFACE_NAME} -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i eth0 -o ${PROVIDER_INTERFACE_NAME} -j ACCEPT
+
 # configure mysql database
 echo "initializing mysql mariadb..."
 
