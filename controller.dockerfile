@@ -70,6 +70,7 @@ USER root
 
 # install etcd
 RUN apt install -y etcd
+RUN apt install -y tini
 
 # install nova
 RUN apt install -y python3-openstackclient keystone glance placement-api nova-api \

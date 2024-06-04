@@ -283,8 +283,6 @@ crudini --set /etc/neutron/neutron.conf DEFAULT \
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     service_plugins "router,segments"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
-    allow_overlapping_ips "true"
-crudini --set /etc/neutron/neutron.conf DEFAULT \
     transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     auth_strategy "keystone"
@@ -349,15 +347,16 @@ crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup \
 
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
     bridge_mappings "provider:${PROVIDER_INTERFACE_NAME}"
-
-crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan \
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
     local_ip "${LOCAL_INT_IP}"
-crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan \
-    l2_population "true"
 
-crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini \
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
+    tunnel_types "vxlan"
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
+    l2_population "true"
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
     enable_security_group "true"
-crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini \
+crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
     firewall_driver "openvswitch"
 
 crudini --set /etc/neutron/l3_agent.ini DEFAULT \
@@ -507,10 +506,10 @@ service nova-novncproxy restart
 
 service neutron-server restart
 # service neutron-linuxbridge-agent restart
-service neutron-l3-agent restart
 service neutron-openvswitch-agent restart
 service neutron-dhcp-agent restart
 service neutron-metadata-agent restart
+service neutron-l3-agent restart
 
 
 # notice compute node
