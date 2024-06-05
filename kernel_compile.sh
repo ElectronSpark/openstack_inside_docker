@@ -8,3 +8,16 @@ sudo apt install build-essential flex bison libssl-dev libelf-dev bc python3 pah
 cd WSL2-Linux-Kernel
 make -j$(nproc) KCONFIG_CONFIG=../config/wsl/.config
 # sudo make modules_install headers_install
+
+# Load the following kernel modules before launching docker instances:
+# kvm
+# kvm_intel
+# xt_connmark
+# ebtables
+# openvswitch
+# nsh
+# nf_conncount
+# br_netfilter
+# bridge
+# stp
+# llc
