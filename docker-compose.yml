@@ -23,6 +23,32 @@ services:
         ipv4_address: 10.100.0.11
     extra_hosts:
       - "compute1:10.0.0.31"
+      - "network:10.0.0.15"
+    
+  network:
+    build:
+      context: .
+      dockerfile: network.dockerfile
+    depends_on:
+      - controller
+    command: ["tini", "/root/network_setup.sh"]
+    stdin_open: true
+    tty: true
+    privileged: true
+    container_name: network
+    hostname: network
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    # volumes:
+        # - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
+        # - '/sys/fs/cgroup:/sys/fs/cgroup'
+    networks:
+      external:
+        ipv4_address: 10.100.0.15
+    extra_hosts:
+      - "controller:10.0.0.11"
+      - "compute1:10.0.0.31"
 
   compute1:
     build:
@@ -47,6 +73,7 @@ services:
         ipv4_address: 10.100.0.31
     extra_hosts:
       - "controller:10.0.0.11"
+      - "network:10.0.0.15"
 
 networks:
   external:

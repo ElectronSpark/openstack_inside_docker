@@ -1,11 +1,10 @@
 FROM ubuntu:20.04
 
-ENV LOCAL_INT_IP="10.0.0.11"
+ENV LOCAL_INT_IP="10.0.0.15"
 ENV LOCAL_NETWORK_GATEWAY="${LOCAL_INT_IP}"
 ENV LOCAL_NETWORK_PREFIX="10.0.0.0"
 ENV LOCAL_NETWORK_PREFIX_LENGTH="24"
 ENV LOCAL_NETWORK="${LOCAL_NETWORK_PREFIX}/${LOCAL_NETWORK_PREFIX_LENGTH}"
-ENV TUNNEL_INTERFACE_NAME="gre0"
 ENV PROVIDER_INTERFACE_DEVICE="eth0"
 ENV PROVIDER_INTERFACE_NAME="br-provider"
 
@@ -56,37 +55,26 @@ RUN add-apt-repository cloud-archive:yoga -y
 RUN echo "allow ${LOCAL_NETWORK}" >> /etc/chrony/chrony.conf
 RUN service chrony restart
 
-# configure mysql database
-RUN apt install -y mariadb-server python3-pymysql
-
-# install message queue
-RUN apt install -y rabbitmq-server
-
-# install memcached
-RUN apt install -y memcached python3-memcache
-
 WORKDIR /root
 USER root
 
-# install etcd
-RUN apt install -y etcd
 RUN apt install -y tini
 
-# install nova
-RUN apt install -y python3-openstackclient keystone glance placement-api nova-api \
-nova-conductor nova-novncproxy nova-scheduler
-
 # install neutron
-RUN apt install -y neutron-server
+RUN apt install -y neutron-plugin-ml2 neutron-dhcp-agent \
+neutron-l3-agent neutron-metadata-agent
+
+# RUN apt install -y neutron-linuxbridge-agent
+RUN apt install -y neutron-openvswitch-agent
 
 RUN apt install -y vim iputils-ping tcpdump
 
+# libvirt related
+RUN apt-get -y install bridge-utils dmidecode dnsmasq ebtables \
+    iproute2 iptables netcat
+
 WORKDIR /root
 RUN apt autoclean -y & apt autoremove -y
-ADD --chown=root:root controller_sql.sql /root/controller_sql.sql
 ADD --chown=openstack:openstack admin_openrc /home/openstack/admin_openrc
 ADD --chown=openstack:openstack demo_openrc /home/openstack/demo_openrc
-ADD --chown=root:root controller_setup.sh /root/controller_setup.sh
-ADD --chown=root:root config/openstack_dashboard/local_settings.py /root/local_settings.py
-ADD --chown=root:root http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img \
-    /root/cirros-0.4.0-x86_64-disk.img
+ADD --chown=root:root network_setup.sh /root/network_setup.sh

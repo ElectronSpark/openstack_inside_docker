@@ -15,8 +15,6 @@ cat /tmp/hosts.new > /etc/hosts
 su -s /bin/bash -c "openssl rand -hex 10" openstack
 
 service dbus start
-service dnsmasq start
-service haproxy start
 
 # create br-provider interface
 service openvswitch-switch start
@@ -25,7 +23,7 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
     set interface ${TUNNEL_INTERFACE_NAME} type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
-    options:remote_ip=10.100.0.31
+    options:remote_ip=10.100.0.15
 ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
 ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
@@ -363,20 +361,6 @@ crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
     firewall_driver "openvswitch"
 
-crudini --set /etc/neutron/l3_agent.ini DEFAULT \
-    interface_driver "openvswitch"
-
-crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
-    interface_driver "openvswitch"
-crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
-    dhcp_driver "neutron.agent.linux.dhcp.Dnsmasq"
-crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
-    enable_isolated_metadata "true"
-
-crudini --set /etc/neutron/metadata_agent.ini DEFAULT \
-    nova_metadata_host "controller"
-crudini --set /etc/neutron/metadata_agent.ini DEFAULT \
-    metadata_proxy_shared_secret "${NOVA_METADATA_SECRET}"
 
 crudini --set /etc/nova/nova.conf neutron \
     auth_url "http://controller:5000"
@@ -509,15 +493,11 @@ service nova-conductor restart
 service nova-novncproxy restart
 
 service neutron-server restart
-# service neutron-linuxbridge-agent restart
-service neutron-openvswitch-agent restart
-service neutron-dhcp-agent restart
-service neutron-metadata-agent restart
-service neutron-l3-agent restart
 
 
 # notice compute node
 echo -n "ok" | netcat compute1 8000 -q 1
+echo -n "ok" | netcat network 8000 -q 1
 
 sleep 5
 su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
