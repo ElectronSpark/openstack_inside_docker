@@ -347,22 +347,6 @@ crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan \
 crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup \
     enable_ipset "true"
 
-
-# crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
-#     bridge_mappings "provider:${PROVIDER_INTERFACE_NAME}"
-# crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
-#     local_ip "${LOCAL_INT_IP}"
-
-# crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
-#     tunnel_types "vxlan"
-# crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
-#     l2_population "true"
-# crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
-#     enable_security_group "true"
-# crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
-#     firewall_driver "openvswitch"
-
-
 crudini --set /etc/nova/nova.conf neutron \
     auth_url "http://controller:5000"
 crudini --set /etc/nova/nova.conf neutron \
