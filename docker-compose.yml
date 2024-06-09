@@ -19,7 +19,6 @@ services:
       - "80:80"
       - "6080:6080"
     networks:
-      provider:
       external:
         ipv4_address: 10.100.0.11
     extra_hosts:
@@ -45,7 +44,6 @@ services:
         # - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
         # - '/sys/fs/cgroup:/sys/fs/cgroup'
     networks:
-      provider:
       external:
         ipv4_address: 10.100.0.15
     extra_hosts:
@@ -71,7 +69,6 @@ services:
         # - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
         # - '/sys/fs/cgroup:/sys/fs/cgroup'
     networks:
-      provider:
       external:
         ipv4_address: 10.100.0.31
     extra_hosts:
@@ -86,18 +83,8 @@ networks:
       com.docker.network.bridge.name: mgmt
       com.docker.network.driver.mtu: 9000
     ipam:
-      # driver: default
+      driver: default
       config:
         - subnet: 10.100.0.0/24
           gateway: 10.100.0.1
 
-  provider:
-    attachable: true
-    driver: host
-    driver_opts:
-      com.docker.network.bridge.name: provider
-      com.docker.network.driver.mtu: 9000
-    ipam:
-      config:
-        - subnet: 10.200.0.0/24
-          gateway: 10.200.0.1
