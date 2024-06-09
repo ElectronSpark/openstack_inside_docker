@@ -26,6 +26,15 @@ ovs-vsctl set int gre_compute1 mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
+
+ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_database -- \
+    set interface gre_database type=gre \
+    options:key=flow \
+    options:packet_type=legacy_l2 \
+    options:remote_ip=10.100.0.5
+ovs-vsctl set int gre_database mtu_request=8958
+
+
 # network node as the default gateway of the provider's network
 sysctl -w net.ipv4.ip_forward=1
 sudo iptables -A FORWARD -i eth0 -o ${PROVIDER_INTERFACE_NAME} -j ACCEPT

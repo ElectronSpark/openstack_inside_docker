@@ -24,6 +24,7 @@ services:
     extra_hosts:
       - "compute1:10.0.0.31"
       - "network:10.0.0.15"
+      - "database:10.0.0.5"
     
   network:
     build:
@@ -49,6 +50,7 @@ services:
     extra_hosts:
       - "controller:10.0.0.11"
       - "compute1:10.0.0.31"
+      - "database:10.0.0.5"
 
   compute1:
     build:
@@ -74,6 +76,27 @@ services:
     extra_hosts:
       - "controller:10.0.0.11"
       - "network:10.0.0.15"
+      - "database:10.0.0.5"
+
+  database:
+    build:
+      context: .
+      dockerfile: database.dockerfile
+    stdin_open: true
+    tty: true
+    privileged: true
+    container_name: database
+    hostname: database
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      external:
+        ipv4_address: 10.100.0.5
+    extra_hosts:
+      - "controller:10.0.0.11"
+      - "network:10.0.0.15"
+      - "compute1:10.0.0.31"
 
 networks:
   external:

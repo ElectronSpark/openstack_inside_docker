@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# libvirt related
-# /usr/bin/tini /usr/sbin/libvirtd
-
 if [ -e "finish_entrypoint.sh" ]; then
     bash finish_entrypoint.sh
 fi
@@ -29,33 +26,6 @@ ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
-# configure mysql database
-echo "initializing mysql mariadb..."
-
-cat > /etc/mysql/mariadb.conf.d/99-openstack.cnf <<EOF
-[mysqld]
-bind-address = ${LOCAL_INT_IP}
-
-default-storage-engine = innodb
-innodb_file_per_table = on
-max_connections = 4096
-collation-server = utf8_general_ci
-character-set-server = utf8
-EOF
-
-service mysql start
-service mysql restart
-echo -e "\n n\n n\n y\n y\n y\n y\n" | mysql_secure_installation
-
-echo "adding user openstack to rabbitmq..."
-service rabbitmq-server restart
-rabbitmqctl add_user openstack ${RABBIT_PASS}
-rabbitmqctl set_permissions openstack ".*" ".*" ".*"
-
-echo "configuring memcached..."
-sed -i "s/^-l 127.0.0.1$/-l ${LOCAL_INT_IP}/g" /etc/memcached.conf
-service memcached start
-
 echo "configuring ETCD..."
 sed -i "s/^.*ETCD_NAME=.*$/ETCD_NAME=\"controller\"/g"   /etc/default/etcd
 sed -i "s/^.*ETCD_DATA_DIR=.*$/ETCD_DATA_DIR=\"\/var\/lib\/etcd\"/g"    /etc/default/etcd
@@ -69,55 +39,19 @@ sed -i "s/^.*ETCD_LISTEN_CLIENT_URLS=.*$/ETCD_LISTEN_CLIENT_URLS=\"http:\/\/${LO
 systemctl enable etcd
 service etcd restart
 
-# add databases for openstack
-echo "creating databases..."
-# mysql -u root < controller_sql.sql
-mysql -u root <<EOF
-CREATE DATABASE keystone;
-GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' \
-IDENTIFIED BY '${KEYSTONE_DBPASS}';
-GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' \
-IDENTIFIED BY '${KEYSTONE_DBPASS}';
+echo "adding user openstack to rabbitmq..."
+service rabbitmq-server restart
+rabbitmqctl add_user openstack ${RABBIT_PASS}
+rabbitmqctl set_permissions openstack ".*" ".*" ".*"
 
-CREATE DATABASE glance;
-GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' \
-IDENTIFIED BY '${GLANCE_DBPASS}';
-GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' \
-IDENTIFIED BY '${GLANCE_DBPASS}';
-
-CREATE DATABASE placement;
-GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'localhost' \
-IDENTIFIED BY '${PLACEMENT_DBPASS}';
-GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'%' \
-IDENTIFIED BY '${PLACEMENT_DBPASS}';
-
-CREATE DATABASE nova_api;
-CREATE DATABASE nova;
-CREATE DATABASE nova_cell0;
-GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' \
-IDENTIFIED BY '${NOVA_DBPASS}';
-GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' \
-IDENTIFIED BY '${NOVA_DBPASS}';
-GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' \
-IDENTIFIED BY '${NOVA_DBPASS}';
-GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' \
-IDENTIFIED BY '${NOVA_DBPASS}';
-GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'localhost' \
-IDENTIFIED BY '${NOVA_DBPASS}';
-GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova'@'%' \
-IDENTIFIED BY '${NOVA_DBPASS}';
-
-CREATE DATABASE neutron;
-GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' \
-IDENTIFIED BY '${NEUTRON_DBPASS}';
-GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' \
-IDENTIFIED BY '${NEUTRON_DBPASS}';
-EOF
+echo "configuring memcached..."
+sed -i "s/^-l 127.0.0.1$/-l ${LOCAL_INT_IP}/g" /etc/memcached.conf
+service memcached start
 
 # configure keystone
 echo "configuring keystone..."
 
-crudini --set /etc/keystone/keystone.conf database connection "mysql+pymysql://keystone:${KEYSTONE_DBPASS}@controller/keystone"
+crudini --set /etc/keystone/keystone.conf database connection "mysql+pymysql://keystone:${KEYSTONE_DBPASS}@database/keystone"
 crudini --set /etc/keystone/keystone.conf token provider "fernet"
 su -s /bin/sh -c "keystone-manage db_sync" keystone
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
@@ -160,7 +94,7 @@ GLANCE_ENDPOINT_ID=$(openstack endpoint list | awk '
 ')
 
 crudini --set /etc/glance/glance-api.conf database connection \
-    "mysql+pymysql://glance:${GLANCE_DBPASS}@controller/glance"
+    "mysql+pymysql://glance:${GLANCE_DBPASS}@database/glance"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
     www_authenticate_uri "http://controller:5000"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
@@ -231,7 +165,7 @@ openstack endpoint create --region RegionOne \
   placement internal http://controller:8778
 
 crudini --set /etc/placement/placement.conf placement_database \
-    connection "mysql+pymysql://placement:${PLACEMENT_DBPASS}@controller/placement"
+    connection "mysql+pymysql://placement:${PLACEMENT_DBPASS}@database/placement"
 crudini --set /etc/placement/placement.conf api \
     auth_strategy "keystone"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
@@ -272,7 +206,7 @@ openstack endpoint create --region RegionOne \
   network admin http://controller:9696
 
 crudini --set /etc/neutron/neutron.conf database \
-    connection "mysql+pymysql://neutron:${NEUTRON_DBPASS}@controller/neutron"
+    connection "mysql+pymysql://neutron:${NEUTRON_DBPASS}@database/neutron"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     core_plugin "ml2"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
@@ -374,9 +308,9 @@ openstack endpoint create --region RegionOne \
   compute admin http://controller:8774/v2.1
 
 crudini --set /etc/nova/nova.conf api_database \
-    connection "mysql+pymysql://nova:${NOVA_DBPASS}@controller/nova_api"
+    connection "mysql+pymysql://nova:${NOVA_DBPASS}@database/nova_api"
 crudini --set /etc/nova/nova.conf database \
-    connection "mysql+pymysql://nova:${NOVA_DBPASS}@controller/nova"
+    connection "mysql+pymysql://nova:${NOVA_DBPASS}@database/nova"
 crudini --set /etc/nova/nova.conf DEFAULT \
     my_ip "${LOCAL_INT_IP}"
 crudini --set /etc/nova/nova.conf DEFAULT \
