@@ -56,9 +56,6 @@ RUN add-apt-repository cloud-archive:yoga -y
 RUN echo "allow ${LOCAL_NETWORK}" >> /etc/chrony/chrony.conf
 RUN service chrony restart
 
-# configure mysql database
-RUN apt install -y mariadb-server python3-pymysql
-
 # install message queue
 RUN apt install -y rabbitmq-server
 
