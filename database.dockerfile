@@ -24,8 +24,5 @@ RUN apt install -y openssh-server openssh-client libssl-dev \
 # configure mysql database
 RUN apt install -y mariadb-server python3-pymysql
 
-# ADD --chown=root:root 99-openstack.cnf /root/99-openstack.cnf
-# RUN cp /root/99-openstack.cnf /etc/mysql/mariadb.conf.d/99-openstack.cnf
-
 ADD --chown=root:root database_setup.sh /root/database_setup.sh
 CMD [ "/root/database_setup.sh" ]
