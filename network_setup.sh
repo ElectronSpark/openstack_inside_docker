@@ -26,6 +26,13 @@ ovs-vsctl set int gre_compute1 mtu_request=8958
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
+# network node as the default gateway of the provider's network
+sysctl -w net.ipv4.ip_forward=1
+sudo iptables -A FORWARD -i eth0 -o ${PROVIDER_INTERFACE_NAME} -j ACCEPT
+sudo iptables -A FORWARD -i ${PROVIDER_INTERFACE_NAME} -o eth0 -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -o ${PROVIDER_INTERFACE_NAME} -j MASQUERADE
+
 echo "configuring neutron network service"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
