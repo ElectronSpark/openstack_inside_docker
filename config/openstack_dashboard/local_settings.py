@@ -96,7 +96,7 @@ SECRET_KEY = secret_key.generate_or_read_from_file('/var/lib/openstack-dashboard
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': 'controller:11211',
+        'LOCATION': 'memcached_server:11211',
     },
 }
 

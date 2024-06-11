@@ -30,7 +30,7 @@ RUN service chrony restart
 RUN apt install -y rabbitmq-server
 
 # install memcached
-RUN apt install -y memcached python3-memcache
+RUN apt install -y python3-memcache
 
 WORKDIR /root
 USER root

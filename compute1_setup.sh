@@ -78,7 +78,7 @@ crudini --set /etc/nova/nova.conf keystone_authtoken \
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     auth_url "http://controller:5000/"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    memcached_servers "controller:11211"
+    memcached_servers "memcached_server:11211"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     auth_type "password"
 crudini --set /etc/nova/nova.conf keystone_authtoken \

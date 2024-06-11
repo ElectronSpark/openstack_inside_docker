@@ -44,10 +44,6 @@ service rabbitmq-server restart
 rabbitmqctl add_user openstack ${RABBIT_PASS}
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
 
-echo "configuring memcached..."
-sed -i "s/^-l 127.0.0.1$/-l ${LOCAL_INT_IP}/g" /etc/memcached.conf
-service memcached start
-
 # configure keystone
 echo "configuring keystone..."
 
@@ -100,7 +96,7 @@ crudini --set /etc/glance/glance-api.conf keystone_authtoken \
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
     auth_url "http://controller:5000"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
-    memcached_servers "controller:11211"
+    memcached_servers "memcached_server:11211"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
     auth_type "password"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
@@ -171,7 +167,7 @@ crudini --set /etc/placement/placement.conf api \
 crudini --set /etc/placement/placement.conf keystone_authtoken \
     auth_url "http://controller:5000/v3"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
-    memcached_servers "controller:11211"
+    memcached_servers "memcached_server:11211"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
     auth_type "password"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
@@ -224,7 +220,7 @@ crudini --set /etc/neutron/neutron.conf keystone_authtoken \
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
     auth_url "http://controller:5000"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    memcached_servers "controller:11211"
+    memcached_servers "memcached_server:11211"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
     auth_type "password"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
@@ -322,7 +318,7 @@ crudini --set /etc/nova/nova.conf keystone_authtoken \
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     auth_url "http://controller:5000/"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    memcached_servers "controller:11211"
+    memcached_servers "memcached_server:11211"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     auth_type "password"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
@@ -432,7 +428,7 @@ crudini --set /etc/cinder/cinder.conf keystone_authtoken \
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
     auth_url "http://controller:5000"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
-    memcached_servers "controller:11211"
+    memcached_servers "memcached_server:11211"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
     auth_type "password"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
