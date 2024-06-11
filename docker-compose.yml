@@ -9,13 +9,6 @@ services:
     hostname: controller
     stdin_open: true
     tty: true
-    privileged: true
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    # volumes:
-        # - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
-        # - '/sys/fs/cgroup:/sys/fs/cgroup'
     ports:
       - "80:80"
       - "6080:6080"
@@ -47,9 +40,6 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    # volumes:
-        # - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
-        # - '/sys/fs/cgroup:/sys/fs/cgroup'
     networks:
       external:
         ipv4_address: 10.100.0.15
@@ -78,9 +68,6 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    # volumes:
-        # - '/lib/modules/6.1.21.2-microsoft-standard-WSL2+:/lib/modules/6.1.21.2-microsoft-standard-WSL2+'
-        # - '/sys/fs/cgroup:/sys/fs/cgroup'
     networks:
       external:
         ipv4_address: 10.100.0.31
@@ -100,12 +87,8 @@ services:
     stdin_open: true
     env_file: "common.env"
     tty: true
-    privileged: true
     container_name: database
     hostname: database
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
     networks:
       external:
         ipv4_address: 10.100.0.5
