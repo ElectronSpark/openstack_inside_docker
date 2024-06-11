@@ -15,24 +15,14 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_controller -- \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.11
+ovs-vsctl set int gre_controller mtu_request=8958
+
 ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_compute1 -- \
     set interface gre_compute1 type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.31
-ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl set int gre_controller mtu_request=8958
 ovs-vsctl set int gre_compute1 mtu_request=8958
-ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
-ip link set dev ${PROVIDER_INTERFACE_NAME} up
-
-
-ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_database -- \
-    set interface gre_database type=gre \
-    options:key=flow \
-    options:packet_type=legacy_l2 \
-    options:remote_ip=10.100.0.5
-ovs-vsctl set int gre_block1 mtu_request=8958
 
 ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_block1 -- \
     set interface gre_block1 type=gre \
@@ -41,6 +31,9 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_block1 -- \
     options:remote_ip=10.100.0.41
 ovs-vsctl set int gre_block1 mtu_request=8958
 
+ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
+ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
+ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 # network node as the default gateway of the provider's network
 sysctl -w net.ipv4.ip_forward=1
