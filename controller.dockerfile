@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ENV LOCAL_INT_IP="10.0.0.11"
+ENV LOCAL_INT_IP="10.100.0.11"
 
 
 # add openstack user
@@ -19,7 +19,7 @@ SHELL ["/bin/bash", "-c"]
 
 # install packages
 RUN apt install -y openssh-server openssh-client libssl-dev \
-    openvswitch-switch-dpdk chrony crudini software-properties-common
+    chrony crudini software-properties-common
 RUN add-apt-repository cloud-archive:yoga -y
 
 # configure NTP

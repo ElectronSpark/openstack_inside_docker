@@ -9,22 +9,7 @@ sed -i "s/.*controller//g" /tmp/hosts.new
 echo "${LOCAL_INT_IP} controller" >> /tmp/hosts.new
 cat /tmp/hosts.new > /etc/hosts
 
-su -s /bin/bash -c "openssl rand -hex 10" openstack
-
 service dbus start
-
-# create br-provider interface
-service openvswitch-switch start
-ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
-    set interface ${TUNNEL_INTERFACE_NAME} type=gre \
-    options:key=flow \
-    options:packet_type=legacy_l2 \
-    options:remote_ip=10.100.0.15
-ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
-ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
-ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 echo "configuring ETCD..."
 sed -i "s/^.*ETCD_NAME=.*$/ETCD_NAME=\"controller\"/g"   /etc/default/etcd
@@ -457,9 +442,9 @@ service apache2 restart
 
 
 # notice compute node
-echo -n "ok" | netcat block1 8000 -q 1
-echo -n "ok" | netcat compute1 8000 -q 1
-echo -n "ok" | netcat network 8000 -q 1
+echo -n "ok" | netcat block1.mgmt 8000 -q 1
+echo -n "ok" | netcat compute1.mgmt 8000 -q 1
+echo -n "ok" | netcat network.mgmt 8000 -q 1
 
 sleep 5
 su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova

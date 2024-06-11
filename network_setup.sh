@@ -8,15 +8,6 @@ service dbus start
 service dnsmasq start
 service haproxy start
 
-service openvswitch-switch start
-ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_controller -- \
-    set interface gre_controller type=gre \
-    options:key=flow \
-    options:packet_type=legacy_l2 \
-    options:remote_ip=10.100.0.11
-ovs-vsctl set int gre_controller mtu_request=8958
-
 ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_compute1 -- \
     set interface gre_compute1 type=gre \
     options:key=flow \

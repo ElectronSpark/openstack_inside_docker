@@ -70,7 +70,7 @@ echo "configuring nova..."
 crudini --set /etc/nova/nova.conf DEFAULT \
     transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
 crudini --set /etc/nova/nova.conf DEFAULT \
-    my_ip "${LOCAL_INT_IP}"
+    my_ip "${LOCAL_MGMT_IP}"
 crudini --set /etc/nova/nova.conf api \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf keystone_authtoken \

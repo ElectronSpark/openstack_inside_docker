@@ -1,6 +1,7 @@
 FROM ubuntu:20.04
 
 ENV LOCAL_INT_IP="10.0.0.31"
+ENV LOCAL_MGMT_IP="10.100.0.31"
 
 # add openstack user
 RUN apt update -y
