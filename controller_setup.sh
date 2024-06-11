@@ -24,11 +24,6 @@ sed -i "s/^.*ETCD_LISTEN_CLIENT_URLS=.*$/ETCD_LISTEN_CLIENT_URLS=\"http:\/\/${LO
 systemctl enable etcd
 service etcd restart
 
-echo "adding user openstack to rabbitmq..."
-service rabbitmq-server restart
-rabbitmqctl add_user openstack ${RABBIT_PASS}
-rabbitmqctl set_permissions openstack ".*" ".*" ".*"
-
 # configure keystone
 echo "configuring keystone..."
 
@@ -169,7 +164,6 @@ crudini --set /etc/placement/placement.conf keystone_authtoken \
 su -s /bin/sh -c "placement-manage db sync" placement
 service apache2 restart
 
-apt install -y python3-osc-placement
 openstack --os-placement-api-version 1.2 resource class list --sort-column name
 openstack --os-placement-api-version 1.6 trait list --sort-column name
 
@@ -193,7 +187,7 @@ crudini --set /etc/neutron/neutron.conf DEFAULT \
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     service_plugins "router,segments"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
-    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+    transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     auth_strategy "keystone"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
@@ -295,7 +289,7 @@ crudini --set /etc/nova/nova.conf database \
 crudini --set /etc/nova/nova.conf DEFAULT \
     my_ip "${LOCAL_INT_IP}"
 crudini --set /etc/nova/nova.conf DEFAULT \
-    transport_url  "rabbit://openstack:${RABBIT_PASS}@controller:5672/"
+    transport_url  "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server:5672/"
 crudini --set /etc/nova/nova.conf api \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
@@ -402,7 +396,7 @@ crudini --set /etc/cinder/cinder.conf database \
     connection "mysql+pymysql://cinder:${CINDER_DBPASS}@database/cinder"
 
 crudini --set /etc/cinder/cinder.conf DEFAULT \
-    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+    transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/cinder/cinder.conf DEFAULT \
     auth_strategy "keystone"
 crudini --set /etc/cinder/cinder.conf DEFAULT \

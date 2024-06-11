@@ -28,7 +28,7 @@ ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 echo "configuring neutron network service"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
-    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+    transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/neutron/neutron.conf oslo_concurrency \
     lock_path "/var/lib/neutron/tmp"
 
@@ -68,7 +68,7 @@ crudini --set /etc/nova/nova.conf neutron \
 # configure nova compute service
 echo "configuring nova..."
 crudini --set /etc/nova/nova.conf DEFAULT \
-    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+    transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/nova/nova.conf DEFAULT \
     my_ip "${LOCAL_MGMT_IP}"
 crudini --set /etc/nova/nova.conf api \

@@ -31,7 +31,7 @@ sudo iptables -t nat -A POSTROUTING -o ${PROVIDER_INTERFACE_NAME} -j MASQUERADE
 
 echo "configuring neutron network service"
 crudini --set /etc/neutron/neutron.conf DEFAULT \
-    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+    transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/neutron/neutron.conf oslo_concurrency \
     lock_path "/var/lib/neutron/tmp"
 

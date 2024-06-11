@@ -12,7 +12,7 @@ crudini --set /etc/cinder/cinder.conf database \
     connection "mysql+pymysql://cinder:${CINDER_DBPASS}@database/cinder"
 
 crudini --set /etc/cinder/cinder.conf DEFAULT \
-    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+    transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/cinder/cinder.conf DEFAULT \
     auth_strategy "keystone"
 crudini --set /etc/cinder/cinder.conf DEFAULT \

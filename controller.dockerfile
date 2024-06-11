@@ -26,9 +26,6 @@ RUN add-apt-repository cloud-archive:yoga -y
 RUN echo "allow ${LOCAL_NETWORK}" >> /etc/chrony/chrony.conf
 RUN service chrony restart
 
-# install message queue
-RUN apt install -y rabbitmq-server
-
 # install memcached
 RUN apt install -y python3-memcache
 
@@ -42,6 +39,9 @@ RUN apt install -y tini
 # install nova
 RUN apt install -y python3-openstackclient keystone glance placement-api nova-api \
 nova-conductor nova-novncproxy nova-scheduler
+
+# install placement client
+RUN apt install -y python3-osc-placement
 
 # install neutron
 RUN apt install -y neutron-server
