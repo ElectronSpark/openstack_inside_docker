@@ -4,18 +4,6 @@ if [ -e "./finish_entrypoint.sh" ]; then
     bash ./finish_entrypoint.sh
 fi
 
-service openvswitch-switch start
-ovs-vsctl add-br ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
-    set interface ${TUNNEL_INTERFACE_NAME} type=gre \
-    options:key=flow \
-    options:packet_type=legacy_l2 \
-    options:remote_ip=10.100.0.15
-ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
-ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
-ip link set dev ${PROVIDER_INTERFACE_NAME} up
-
 echo "nfs_server:/home" > /etc/cinder/nfs_shares
 chown root:cinder /etc/cinder/nfs_shares
 chmod 0640 /etc/cinder/nfs_shares

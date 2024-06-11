@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ENV LOCAL_INT_IP="10.0.0.41"
+ENV LOCAL_INT_IP="10.100.0.41"
 
 # add openstack user
 RUN apt update -y
@@ -21,8 +21,7 @@ RUN chown -R openstack:openstack /home/openstack
 RUN chown -R cinder:cinder /home/cinder
 
 # install packages
-RUN apt install -y openssh-server openssh-client libssl-dev \
-    openvswitch-switch-dpdk chrony crudini software-properties-common
+RUN apt install -y chrony crudini software-properties-common
 RUN add-apt-repository cloud-archive:yoga -y
 
 # configure NTP

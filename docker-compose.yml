@@ -110,7 +110,7 @@ services:
       - "controller:10.100.0.11"
       - "network:10.100.0.15"
       - "compute1:10.100.0.31"
-      - "block1:10.0.100.41"
+      - "block1:10.100.0.41"
       - "nfs_server:10.100.0.6"
       - "memcached_server:10.100.0.7"
 
