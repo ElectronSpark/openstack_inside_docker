@@ -23,6 +23,8 @@ ENV NOVA_PASS="password"
 ENV NOVA_METADATA_SECRET="secret"
 ENV NEUTRON_DBPASS="password"
 ENV NEUTRON_PASS="password"
+ENV CINDER_DBPASS="password"
+ENV CINDER_PASS="password"
 
 ENV OS_USERNAME="admin"
 ENV OS_PASSWORD="${KEYSTONE_DBPASS}"
@@ -75,6 +77,9 @@ nova-conductor nova-novncproxy nova-scheduler
 
 # install neutron
 RUN apt install -y neutron-server
+
+# install cinder
+RUN apt -y install cinder-api cinder-scheduler
 
 RUN apt install -y vim iputils-ping tcpdump
 

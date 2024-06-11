@@ -16,6 +16,7 @@ ENV GLANCE_DBPASS="password"
 ENV PLACEMENT_DBPASS="password"
 ENV NOVA_DBPASS="password"
 ENV NEUTRON_DBPASS="password"
+ENV CINDER_DBPASS="password"
 
 RUN apt update -y
 RUN apt install -y openssh-server openssh-client libssl-dev \

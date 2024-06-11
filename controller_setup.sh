@@ -405,8 +405,63 @@ service nova-novncproxy restart
 
 service neutron-server restart
 
+# configure cinder
+openstack user create --domain default --password ${CINDER_PASS} cinder
+openstack role add --project service --user cinder admin
+openstack service create --name cinderv3 \
+  --description "OpenStack Block Storage" volumev3
+openstack endpoint create --region RegionOne \
+  volumev3 public http://controller:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 internal http://controller:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 admin http://controller:8776/v3/%\(project_id\)s
+
+crudini --set /etc/cinder/cinder.conf database \
+    connection "mysql+pymysql://cinder:${CINDER_DBPASS}@database/cinder"
+
+crudini --set /etc/cinder/cinder.conf DEFAULT \
+    transport_url "rabbit://openstack:${RABBIT_PASS}@controller"
+crudini --set /etc/cinder/cinder.conf DEFAULT \
+    auth_strategy "keystone"
+crudini --set /etc/cinder/cinder.conf DEFAULT \
+    my_ip "${LOCAL_INT_IP}"
+
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    www_authenticate_uri "http://controller:5000"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    auth_url "http://controller:5000"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    memcached_servers "controller:11211"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    auth_type "password"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    project_domain_name "default"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    user_domain_name "default"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    project_name "service"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    username "cinder"
+crudini --set /etc/cinder/cinder.conf keystone_authtoken \
+    password "${CINDER_PASS}"
+
+crudini --set /etc/cinder/cinder.conf oslo_concurrency \
+    lock_path "/var/lib/cinder/tmp"
+
+su -s /bin/sh -c "cinder-manage db sync" cinder
+
+# configure nova for cinder
+crudini --set /etc/nova/nova.conf cinder \
+    os_region_name "RegionOne"
+
+service nova-api restart
+service cinder-scheduler restart
+service apache2 restart
+
 
 # notice compute node
+echo -n "ok" | netcat block1 8000 -q 1
 echo -n "ok" | netcat compute1 8000 -q 1
 echo -n "ok" | netcat network 8000 -q 1
 

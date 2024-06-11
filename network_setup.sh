@@ -32,7 +32,14 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_database -- \
     options:key=flow \
     options:packet_type=legacy_l2 \
     options:remote_ip=10.100.0.5
-ovs-vsctl set int gre_database mtu_request=8958
+ovs-vsctl set int gre_block1 mtu_request=8958
+
+ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_block1 -- \
+    set interface gre_block1 type=gre \
+    options:key=flow \
+    options:packet_type=legacy_l2 \
+    options:remote_ip=10.100.0.41
+ovs-vsctl set int gre_block1 mtu_request=8958
 
 
 # network node as the default gateway of the provider's network

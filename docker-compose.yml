@@ -25,6 +25,8 @@ services:
       - "compute1:10.0.0.31"
       - "network:10.0.0.15"
       - "database:10.0.0.5"
+      - "block1:10.0.0.41"
+      - "nfs_server:10.100.0.6"
     
   network:
     build:
@@ -51,6 +53,8 @@ services:
       - "controller:10.0.0.11"
       - "compute1:10.0.0.31"
       - "database:10.0.0.5"
+      - "block1:10.0.0.41"
+      - "nfs_server:10.100.0.6"
 
   compute1:
     build:
@@ -77,6 +81,8 @@ services:
       - "controller:10.0.0.11"
       - "network:10.0.0.15"
       - "database:10.0.0.5"
+      - "block1:10.0.0.41"
+      - "nfs_server:10.100.0.6"
 
   database:
     build:
@@ -97,6 +103,41 @@ services:
       - "controller:10.0.0.11"
       - "network:10.0.0.15"
       - "compute1:10.0.0.31"
+      - "block1:10.0.0.41"
+      - "nfs_server:10.100.0.6"
+  nfs_server:
+    image: erichough/nfs-server
+    privileged: true
+    volumes:
+      - ~/nfs_root:/srv/nfs4:rw
+      - ~/nfs_home:/srv/nfs4/home:rw
+      - ./exports.txt:/etc/exports:ro
+    networks:
+      external:
+        ipv4_address: 10.100.0.6
+
+  block1:
+    build:
+      context: .
+      dockerfile: block1.dockerfile
+    stdin_open: true
+    tty: true
+    command: ["bash", "/root/block1_setup.sh"]
+    privileged: true
+    container_name: block1
+    hostname: block1
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      external:
+        ipv4_address: 10.100.0.41
+    extra_hosts:
+      - "controller:10.0.0.11"
+      - "network:10.0.0.15"
+      - "compute1:10.0.0.31"
+      - "database:10.0.0.5"
+      - "nfs_server:10.100.0.6"
 
 networks:
   external:

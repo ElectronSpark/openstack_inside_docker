@@ -75,6 +75,13 @@ GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' \
 IDENTIFIED BY '${NEUTRON_DBPASS}';
 GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' \
 IDENTIFIED BY '${NEUTRON_DBPASS}';
+
+CREATE DATABASE cinder;
+
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' \
+IDENTIFIED BY '${CINDER_DBPASS}';
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' \
+IDENTIFIED BY '${CINDER_DBPASS}';
 EOF
 
 echo "done"
