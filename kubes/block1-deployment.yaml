@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: block1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: block1
+  template:
+    metadata:
+      labels:
+        app: block1
+    spec:
+      containers:
+      - name: block1
+        securityContext:
+          privileged: true
+        image: block1-image:latest
+        imagePullPolicy: Never
+        command: ["tini", "--", "/root/block1_setup.sh"]
+        envFrom:
+        - configMapRef:
+            name: common-env

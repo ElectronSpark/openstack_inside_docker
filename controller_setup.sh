@@ -436,9 +436,9 @@ service apache2 restart
 
 
 # notice compute node
-echo -n "ok" | netcat block1.mgmt 8000 -q 1
-echo -n "ok" | netcat compute1.mgmt 8000 -q 1
-echo -n "ok" | netcat network.mgmt 8000 -q 1
+echo -n "ok" | netcat block1 8000 -q 1
+echo -n "ok" | netcat compute1 8000 -q 1
+echo -n "ok" | netcat network 8000 -q 1
 
 sleep 5
 su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
@@ -448,9 +448,9 @@ openstack network create  --share --external \
   --provider-physical-network provider \
   --provider-network-type flat provider
 openstack subnet create --network provider \
-  --allocation-pool start=10.0.0.64,end=10.0.0.250 \
-  --dns-nameserver 8.8.4.4 --gateway ${LOCAL_NETWORK_GATEWAY} \
-  --subnet-range ${LOCAL_NETWORK} \
+  --allocation-pool start=${PROVIDER_NETWORK_POOL_START},end=${PROVIDER_NETWORK_POOL_END} \
+  --dns-nameserver 8.8.4.4 --gateway ${PROVIDER_NETWORK_GATEWAY} \
+  --subnet-range ${PROVIDER_NETWORK} \
   provider
 openstack network create selfservice
 openstack subnet create --network selfservice \

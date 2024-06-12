@@ -21,3 +21,4 @@ make -j$(nproc) KCONFIG_CONFIG=../config/wsl/.config
 # bridge
 # stp
 # llc
+# sudo modprobe kvm kvm_intel xt_connmark ebtables openvswitch nsh nf_conncount br_netfilter bridge stp llc

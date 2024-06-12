@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compute1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: compute1
+  template:
+    metadata:
+      labels:
+        app: compute1
+    spec:
+      containers:
+      - name: compute1
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW"]
+          privileged: true
+        env:
+        - name: PROVIDER_INTERFACE_NAME
+          value: "br-provider"
+        image: compute1-image:latest
+        imagePullPolicy: Never
+        command: ["tini", "--", "/root/compute1_setup.sh"]
+        envFrom:
+        - configMapRef:
+            name: common-env

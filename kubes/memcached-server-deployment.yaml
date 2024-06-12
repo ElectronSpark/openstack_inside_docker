@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memcached-server
+  template:
+    metadata:
+      labels:
+        app: memcached-server
+    spec:
+      containers:
+      - name: memcached-server
+        image: memcached:latest

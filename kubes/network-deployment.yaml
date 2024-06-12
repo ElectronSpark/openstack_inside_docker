@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: network
+  template:
+    metadata:
+      labels:
+        app: network
+    spec:
+      initContainers:
+      - name: init-sysctl
+        image: soarinferret/iptablesproxy
+        imagePullPolicy: Never
+        command:
+        - sh
+        - -c
+        - |
+          sysctl -w net.ipv4.ip_forward=1
+          iptables -A FORWARD -i eth0 -o ${PROVIDER_INTERFACE_NAME} -j ACCEPT
+          iptables -A FORWARD -i ${PROVIDER_INTERFACE_NAME} -o eth0 -j ACCEPT
+          iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+          iptables -t nat -A POSTROUTING -o ${PROVIDER_INTERFACE_NAME} -j MASQUERADE
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW"]
+          privileged: true
+        env:
+        - name: PROVIDER_INTERFACE_NAME
+          value: "eth0" # 替换为实际的提供者接口名称
+      containers:
+      - name: network
+        image: network-image:latest
+        imagePullPolicy: Never
+        command: ["tini", "--", "/root/network_setup.sh"]
+        envFrom:
+        - configMapRef:
+            name: common-env

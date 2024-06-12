@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: compute1
+spec:
+  selector:
+    app: compute1
+  ports:
+    - name: ofc
+      protocol: TCP
+      port: 6633
+      targetPort: 6633
+    - name: ovsdb
+      protocol: TCP
+      port: 6640
+      targetPort: 6640
+    - name: dns-domain
+      protocol: TCP
+      port: 53
+      targetPort: 53
+    - name: dns-domain-local
+      protocol: TCP
+      port: 36865
+      targetPort: 36865
+    - name: dns-udp
+      protocol: UDP
+      port: 53
+      targetPort: 53
+    - name: dns-udp-local
+      protocol: UDP
+      port: 33825
+      targetPort: 33825
+    - name: dhcp
+      protocol: UDP
+      port: 67
+      targetPort: 67

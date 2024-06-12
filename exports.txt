@@ -8,5 +8,5 @@
 # /srv/nfs4        gss/krb5i(rw,sync,fsid=0,crossmnt,no_subtree_check)
 # /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)
 #
-/srv/nfs4       10.100.0.0/24(rw,sync,fsid=0,crossmnt,no_subtree_check,no_root_squash)
-/srv/nfs4/home  10.100.0.0/24(rw,sync,no_subtree_check,no_root_squash)
+/srv/nfs4       0.0.0.0(rw,sync,fsid=0,crossmnt,no_subtree_check,no_root_squash)
+/srv/nfs4/home  0.0.0.0(rw,sync,no_subtree_check,no_root_squash)

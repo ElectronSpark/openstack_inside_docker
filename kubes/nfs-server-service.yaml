@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfs-server
+spec:
+  selector:
+    app: nfs-server
+  ports:
+    - name: rpc-statd-tcp
+      protocol: TCP
+      port: 32765
+      targetPort: 32765
+    - name: rpc-mountd-tcp
+      protocol: TCP
+      port: 32767
+      targetPort: 32767
+    - name: custom-tcp-46793
+      protocol: TCP
+      port: 46793
+      targetPort: 46793
+    - name: nfs-tcp
+      protocol: TCP
+      port: 2049
+      targetPort: 2049
+    - name: rpcbind-tcp
+      protocol: TCP
+      port: 111
+      targetPort: 111
+    - name: custom-tcp-43909
+      protocol: TCP
+      port: 43909
+      targetPort: 43909
+    - name: rpc-statd-udp
+      protocol: UDP
+      port: 32765
+      targetPort: 32765
+    - name: rpc-mountd-udp
+      protocol: UDP
+      port: 32767
+      targetPort: 32767
+    - name: rpcbind-udp
+      protocol: UDP
+      port: 111
+      targetPort: 111
+    - name: custom-udp-50234
+      protocol: UDP
+      port: 50234
+      targetPort: 50234
+    - name: nfs-udp
+      protocol: UDP
+      port: 2049
+      targetPort: 2049

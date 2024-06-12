@@ -19,10 +19,10 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
     set interface ${TUNNEL_INTERFACE_NAME} type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
-    options:remote_ip=10.100.0.15
-ip address add ${LOCAL_INT_IP}/${LOCAL_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
-ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=8958
-ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=8958
+    options:remote_ip=network
+ip address add ${PROVIDER_INT_IP}/${PROVIDER_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
+ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=1450
+ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=1450
 ip link set dev ${PROVIDER_INTERFACE_NAME} up
 
 
@@ -37,7 +37,7 @@ crudini --set /etc/neutron/neutron.conf oslo_concurrency \
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
     bridge_mappings "provider:${PROVIDER_INTERFACE_NAME}"
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs \
-    local_ip "${LOCAL_INT_IP}"
+    local_ip "${PROVIDER_INT_IP}"
 
 crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini agent \
     tunnel_types "vxlan"

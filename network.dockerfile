@@ -1,7 +1,11 @@
 FROM ubuntu:20.04
 
-ENV LOCAL_INT_IP="10.0.0.15"
-
+COPY <<EOF /etc/profile.d/generate_env.sh
+export PROVIDER_INT_IP="10.0.0.15"
+export LOCAL_INT_IP="$(ip route get 8.8.8.8 | sed -E 's/.*via (\S+) .*/\1/;t;d')"
+export LOCAL_INT_NAME="$(ip route get 8.8.8.8 | sed -E 's/.*dev (\S+) .*/\1/;t;d')"
+export LOCAL_INT_GATEWAY="$(ip route get 8.8.8.8 | sed -E 's/.*src (\S+) .*/\1/;t;d')"
+EOF
 
 # add openstack user
 RUN apt update -y
@@ -23,8 +27,8 @@ RUN apt install -y openssh-server openssh-client libssl-dev \
 RUN add-apt-repository cloud-archive:yoga -y
 
 # configure NTP
-RUN echo "allow ${LOCAL_NETWORK}" >> /etc/chrony/chrony.conf
-RUN service chrony restart
+# RUN echo "allow ${LOCAL_NETWORK}" >> /etc/chrony/chrony.conf
+# RUN service chrony restart
 
 WORKDIR /root
 USER root

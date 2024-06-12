@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: controller
+  template:
+    metadata:
+      labels:
+        app: controller
+    spec:
+      containers:
+      - name: controller
+        image: controller-image:latest
+        imagePullPolicy: Never
+        command: ["tini", "--", "/root/controller_setup.sh"]
+        envFrom:
+        - configMapRef:
+            name: common-env
+        ports:
+        - containerPort: 80
+        - containerPort: 6080

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-server
+spec:
+  selector:
+    app: rabbitmq-server
+  ports:
+    - name: epmd
+      protocol: TCP
+      port: 4369
+      targetPort: 4369
+    - name: amqp
+      protocol: TCP
+      port: 5672
+      targetPort: 5672
+    - name: mgmt
+      protocol: TCP
+      port: 25672
+      targetPort: 25672
+    - name: epmd-udp
+      protocol: UDP
+      port: 53824
+      targetPort: 53824
+    - name: port-45175
+      protocol: TCP
+      port: 45175
+      targetPort: 45175
