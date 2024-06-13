@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/profile.d/99-generate_env.sh
+
 if [ -e "finish_entrypoint.sh" ]; then
     bash finish_entrypoint.sh
 fi
@@ -289,7 +291,7 @@ crudini --set /etc/nova/nova.conf database \
 crudini --set /etc/nova/nova.conf DEFAULT \
     my_ip "${LOCAL_INT_IP}"
 crudini --set /etc/nova/nova.conf DEFAULT \
-    transport_url  "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server:5672/"
+    transport_url  "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/nova/nova.conf api \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf keystone_authtoken \

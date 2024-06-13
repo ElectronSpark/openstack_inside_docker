@@ -16,3 +16,5 @@ spec:
       - name: rabbitmq-server
         image: rabbitmq-server-image:latest
         imagePullPolicy: Never
+        tty: true
+        stdin: true

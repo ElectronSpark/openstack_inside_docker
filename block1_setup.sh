@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/profile.d/99-generate_env.sh
+
 if [ -e "./finish_entrypoint.sh" ]; then
     bash ./finish_entrypoint.sh
 fi

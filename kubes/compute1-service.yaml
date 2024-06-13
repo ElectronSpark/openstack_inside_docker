@@ -34,3 +34,7 @@ spec:
       protocol: UDP
       port: 67
       targetPort: 67
+    - name: controller-wakeup
+      protocol: TCP
+      port: 8000
+      targetPort: 8000

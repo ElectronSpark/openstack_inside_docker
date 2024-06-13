@@ -22,3 +22,17 @@ make -j$(nproc) KCONFIG_CONFIG=../config/wsl/.config
 # stp
 # llc
 # sudo modprobe kvm kvm_intel xt_connmark ebtables openvswitch nsh nf_conncount br_netfilter bridge stp llc
+
+# may need to change wsl docker-desktop instance
+## cat /etc/wsl.conf
+#[automount]
+#root = /mnt/host
+#crossDistro = true
+#enabled=true
+#options="metadata,umask=22,fmask=11"
+#[network]
+#generateResolvConf = false
+
+# Then recreate /etc/resolv.conf
+# nameserver 8.8.8.8
+# nameserver 8.8.4.4 

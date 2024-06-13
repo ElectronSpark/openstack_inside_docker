@@ -22,7 +22,11 @@ $(awk 'NF && $1!~/^#/ {split($0, a, "="); printf "  %s: %s\n", a[1], a[2]}' comm
 EOF
 
 # for calio
-mount -t bpf bpffs /sys/fs/bpf
+sudo mount bpffs -t bpf /sys/fs/bpf
+sudo mount --make-shared /sys/fs/bpf
+# sudo mkdir -p /run/cilium/cgroupv2
+# sudo mount -t cgroup2 none /run/cilium/cgroupv2
+# sudo mount --make-shared /run/cilium/cgroupv2/
 
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/custom-resources.yaml

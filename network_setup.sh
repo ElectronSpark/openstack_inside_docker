@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/profile.d/99-generate_env.sh
+
 if [ -e "./finish_entrypoint.sh" ]; then
     bash ./finish_entrypoint.sh
 fi
@@ -15,7 +17,7 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} gre_compute1 -- \
     set interface gre_compute1 type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
-    options:remote_ip=compute1
+    options:remote_ip=$(getent hosts compute1 | cut -d' ' -f1)
 ovs-vsctl set int gre_compute1 mtu_request=1450
 
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=1450

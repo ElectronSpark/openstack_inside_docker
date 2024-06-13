@@ -36,6 +36,12 @@ spec:
       - name: network
         image: network-image:latest
         imagePullPolicy: Never
+        tty: true
+        stdin: true
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW"]
+          privileged: true
         command: ["tini", "--", "/root/network_setup.sh"]
         envFrom:
         - configMapRef:

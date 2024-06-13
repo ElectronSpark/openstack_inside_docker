@@ -22,3 +22,5 @@ spec:
         envFrom:
         - configMapRef:
             name: common-env
+        tty: true
+        stdin: true

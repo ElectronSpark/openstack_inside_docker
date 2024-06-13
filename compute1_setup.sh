@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/profile.d/99-generate_env.sh
+
 if [ -e "./finish_entrypoint.sh" ]; then
     bash ./finish_entrypoint.sh
 fi
@@ -19,7 +21,7 @@ ovs-vsctl add-port ${PROVIDER_INTERFACE_NAME} ${TUNNEL_INTERFACE_NAME} -- \
     set interface ${TUNNEL_INTERFACE_NAME} type=gre \
     options:key=flow \
     options:packet_type=legacy_l2 \
-    options:remote_ip=network
+    options:remote_ip=$(getent hosts network | cut -d' ' -f1)
 ip address add ${PROVIDER_INT_IP}/${PROVIDER_NETWORK_PREFIX_LENGTH} dev ${PROVIDER_INTERFACE_NAME}
 ovs-vsctl set int ${TUNNEL_INTERFACE_NAME} mtu_request=1450
 ovs-vsctl set int ${PROVIDER_INTERFACE_NAME} mtu_request=1450
@@ -70,7 +72,7 @@ echo "configuring nova..."
 crudini --set /etc/nova/nova.conf DEFAULT \
     transport_url "rabbit://openstack:${RABBIT_PASS}@rabbitmq_server"
 crudini --set /etc/nova/nova.conf DEFAULT \
-    my_ip "${LOCAL_MGMT_IP}"
+    my_ip "${PROVIDER_INT_IP}"
 crudini --set /etc/nova/nova.conf api \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
@@ -118,7 +120,7 @@ crudini --set /etc/nova/nova.conf vnc \
 crudini --set /etc/nova/nova.conf vnc \
     server_listen "0.0.0.0"
 crudini --set /etc/nova/nova.conf vnc \
-    server_proxyclient_address "\$my_ip"
+    server_proxyclient_address "${LOCAL_INT_IP}"
 crudini --set /etc/nova/nova.conf vnc \
     novncproxy_base_url "http://localhost:6080/vnc_auto.html"
 

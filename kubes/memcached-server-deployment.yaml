@@ -15,3 +15,5 @@ spec:
       containers:
       - name: memcached-server
         image: memcached:latest
+        tty: true
+        stdin: true

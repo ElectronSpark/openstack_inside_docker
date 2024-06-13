@@ -45,7 +45,7 @@ services:
         ipv4_address: 10.100.0.15
     extra_hosts:
       - "controller:10.100.0.11"
-      - "compute1:10.0.0.31"
+      - "compute1:10.100.0.31"
       - "block1:10.100.0.41"
       - "database:10.100.0.5"
       - "nfs_server:10.100.0.6"
@@ -73,7 +73,7 @@ services:
         ipv4_address: 10.100.0.31
     extra_hosts:
       - "controller:10.100.0.11"
-      - "network:10.0.0.15"
+      - "network:10.100.0.15"
       - "block1:10.100.0.41"
       - "database:10.100.0.5"
       - "nfs_server:10.100.0.6"
@@ -86,6 +86,7 @@ services:
       dockerfile: database.dockerfile
     stdin_open: true
     env_file: "common.env"
+    command: ["tini", "--", "/root/database_setup.sh"]
     tty: true
     container_name: database
     hostname: database
@@ -104,6 +105,9 @@ services:
   nfs_server:
     image: erichough/nfs-server
     privileged: true
+    environment:
+      NFS_EXPORT_0: "/srv/nfs4       *(rw,sync,fsid=0,crossmnt,no_subtree_check,no_root_squash)"
+      NFS_EXPORT_1: "/srv/nfs4/home  *(rw,sync,no_subtree_check,no_root_squash)"
     volumes:
       - ~/nfs_root:/srv/nfs4:rw
       - ~/nfs_home:/srv/nfs4/home:rw
@@ -114,7 +118,6 @@ services:
 
   memcached_server:
     image: memcached
-    # command: ["sed", "-i", "\"s/^-l 127.0.0.1$/-l 10.100.0.7/g\"", "/etc/memcached.conf"]
     networks:
       external:
         ipv4_address: 10.100.0.7

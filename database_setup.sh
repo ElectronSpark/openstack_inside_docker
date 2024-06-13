@@ -1,7 +1,9 @@
 #!/bin/bash
 
-if [ -e "finish_entrypoint.sh" ]; then
-    bash finish_entrypoint.sh
+source /etc/profile.d/99-generate_env.sh
+
+if [ -e "/root/finish_entrypoint.sh" ]; then
+    bash /root/finish_entrypoint.sh
 fi
 
 # configure mysql database
@@ -9,7 +11,8 @@ echo "initializing mysql mariadb..."
 
 cat > /etc/mysql/mariadb.conf.d/99-openstack.cnf <<EOF
 [mysqld]
-bind-address = ${LOCAL_INT_IP}
+# bind-address = ${LOCAL_INT_IP}
+bind-address = 0.0.0.0
 
 default-storage-engine = innodb
 innodb_file_per_table = on
@@ -17,10 +20,11 @@ max_connections = 4096
 collation-server = utf8_general_ci
 character-set-server = utf8
 EOF
+cat /etc/mysql/mariadb.conf.d/99-openstack.cnf
 
 service mysql start
-echo -e "\n n\n n\n y\n y\n y\n y\n" | mysql_secure_installation
-# add databases for openstack
+# echo -e "\n n\n n\n y\n y\n y\n y\n" | mysql_secure_installation
+# # add databases for openstack
 echo "creating databases..."
 mysql -u root <<EOF
 CREATE DATABASE keystone;
@@ -73,12 +77,12 @@ EOF
 
 echo "done"
 
-if [ ! -e "finish_entrypoint.sh" ]; then
-cat > finish_entrypoint.sh << EOF
+if [ ! -e "/root/finish_entrypoint.sh" ]; then
+cat > /root/finish_entrypoint.sh << EOF
 #!/bin/bash
 
 /bin/bash
 EOF
-chmod 755 ./finish_entrypoint.sh
+chmod 755 /root/finish_entrypoint.sh
 fi
-bash ./finish_entrypoint.sh
+bash

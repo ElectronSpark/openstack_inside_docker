@@ -27,6 +27,8 @@ spec:
           mountPath: /srv/nfs4
         - name: nfs-home
           mountPath: /srv/nfs4/home
+        tty: true
+        stdin: true
       volumes:
       - name: nfs-root
         emptyDir:

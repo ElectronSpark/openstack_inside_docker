@@ -3,13 +3,20 @@ FROM ubuntu:20.04
 RUN apt update -y
 
 # configure mysql database
-RUN apt install -y mariadb-server python3-pymysql
+RUN apt install -y mariadb-server
+# mysql client
+RUN apt install -y python3-pymysql 
 
-COPY <<EOF /etc/profile.d/generate_env.sh
-export LOCAL_INT_IP="$(ip route get 8.8.8.8 | sed -E 's/.*via (\S+) .*/\1/;t;d')"
-export LOCAL_INT_NAME="$(ip route get 8.8.8.8 | sed -E 's/.*dev (\S+) .*/\1/;t;d')"
-export LOCAL_INT_GATEWAY="$(ip route get 8.8.8.8 | sed -E 's/.*src (\S+) .*/\1/;t;d')"
-EOF
+RUN apt install -y vim
+RUN apt install -y iputils-ping tcpdump
+RUN apt install -y net-tools
+RUN apt install -y tini
 
-ADD --chown=root:root database_setup.sh /root/database_setup.sh
-CMD [ "/root/database_setup.sh" ]
+ADD --chown=root:root ./database_setup.sh /root/database_setup.sh
+ADD --chown=root:root ./config/profile.d/99-generate_env.sh /etc/profile.d/99-generate_env.sh
+
+WORKDIR /root
+USER root
+RUN apt autoclean -y & apt autoremove -y
+RUN echo "source /etc/profile.d/99-generate_env.sh" >> /etc/bash.bashrc
+CMD ["tini", "--", "/root/database_setup.sh"]

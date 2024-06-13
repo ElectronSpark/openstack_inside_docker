@@ -22,4 +22,8 @@ spec:
             name: common-env
         ports:
         - containerPort: 80
+          hostPort: 80
         - containerPort: 6080
+          hostPort: 6080
+        tty: true
+        stdin: true

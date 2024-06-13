@@ -10,3 +10,7 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
+    - name: controller-wakeup
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
