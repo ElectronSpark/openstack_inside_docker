@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller
+  name: os-controller
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: controller
+      app: os-controller
   template:
     metadata:
       labels:
-        app: controller
+        app: os-controller
     spec:
       containers:
-      - name: controller
+      - name: os-controller
         image: controller-image:latest
         imagePullPolicy: Never
         command: ["tini", "--", "/root/controller_setup.sh"]

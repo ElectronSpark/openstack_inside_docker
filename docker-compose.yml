@@ -1,12 +1,12 @@
 services:
-  controller:
+  os-controller:
     build:
       context: .
       dockerfile: controller.dockerfile
-    container_name: controller
+    container_name: os-controller
     env_file: "common.env"
     command: ["tini", "--", "/root/controller_setup.sh"]
-    hostname: controller
+    hostname: os-controller
     stdin_open: true
     tty: true
     ports:
@@ -28,8 +28,6 @@ services:
     build:
       context: .
       dockerfile: network.dockerfile
-    depends_on:
-      - controller
     env_file: "common.env"
     command: ["tini", "--", "/root/network_setup.sh"]
     stdin_open: true
@@ -44,7 +42,7 @@ services:
       external:
         ipv4_address: 10.100.0.15
     extra_hosts:
-      - "controller:10.100.0.11"
+      - "os-controller:10.100.0.11"
       - "compute1:10.100.0.31"
       - "block1:10.100.0.41"
       - "database:10.100.0.5"
@@ -56,8 +54,6 @@ services:
     build:
       context: .
       dockerfile: compute1.dockerfile
-    depends_on:
-      - controller
     env_file: "common.env"
     command: ["tini", "--", "/root/compute1_setup.sh"]
     stdin_open: true
@@ -72,7 +68,7 @@ services:
       external:
         ipv4_address: 10.100.0.31
     extra_hosts:
-      - "controller:10.100.0.11"
+      - "os-controller:10.100.0.11"
       - "network:10.100.0.15"
       - "block1:10.100.0.41"
       - "database:10.100.0.5"
@@ -94,7 +90,7 @@ services:
       external:
         ipv4_address: 10.100.0.5
     extra_hosts:
-      - "controller:10.100.0.11"
+      - "os-controller:10.100.0.11"
       - "network:10.100.0.15"
       - "compute1:10.100.0.31"
       - "block1:10.100.0.41"
@@ -111,7 +107,6 @@ services:
     volumes:
       - ~/nfs_root:/srv/nfs4:rw
       - ~/nfs_home:/srv/nfs4/home:rw
-      - ./exports.txt:/etc/exports:ro
     networks:
       external:
         ipv4_address: 10.100.0.6
@@ -149,7 +144,7 @@ services:
       external:
         ipv4_address: 10.100.0.41
     extra_hosts:
-      - "controller:10.100.0.11"
+      - "os-controller:10.100.0.11"
       - "network:10.100.0.15"
       - "compute1:10.100.0.31"
       - "database:10.100.0.5"

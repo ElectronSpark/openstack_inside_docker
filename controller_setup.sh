@@ -7,18 +7,18 @@ if [ -e "finish_entrypoint.sh" ]; then
 fi
 
 cp -f /etc/hosts /tmp/hosts.new
-sed -i "s/.*controller//g" /tmp/hosts.new
-echo "${LOCAL_INT_IP} controller" >> /tmp/hosts.new
+sed -i "s/.*os-controller//g" /tmp/hosts.new
+echo "${LOCAL_INT_IP} os-controller" >> /tmp/hosts.new
 cat /tmp/hosts.new > /etc/hosts
 
 service dbus start
 
 echo "configuring ETCD..."
-sed -i "s/^.*ETCD_NAME=.*$/ETCD_NAME=\"controller\"/g"   /etc/default/etcd
+sed -i "s/^.*ETCD_NAME=.*$/ETCD_NAME=\"os-controller\"/g"   /etc/default/etcd
 sed -i "s/^.*ETCD_DATA_DIR=.*$/ETCD_DATA_DIR=\"\/var\/lib\/etcd\"/g"    /etc/default/etcd
 sed -i "s/^.*ETCD_INITIAL_CLUSTER_STATE=.*$/ETCD_INITIAL_CLUSTER_STATE=\"new\"/g"    /etc/default/etcd
 sed -i "s/^.*ETCD_INITIAL_CLUSTER_TOKEN=.*$/ETCD_INITIAL_CLUSTER_TOKEN=\"etcd-cluster-01\"/g"    /etc/default/etcd
-sed -i "s/^.*ETCD_INITIAL_CLUSTER=.*$/ETCD_INITIAL_CLUSTER=\"controller=http:\/\/${LOCAL_INT_IP}:2380\"/g" /etc/default/etcd
+sed -i "s/^.*ETCD_INITIAL_CLUSTER=.*$/ETCD_INITIAL_CLUSTER=\"os-controller=http:\/\/${LOCAL_INT_IP}:2380\"/g" /etc/default/etcd
 sed -i "s/^.*ETCD_INITIAL_ADVERTISE_PEER_URLS=.*$/ETCD_INITIAL_ADVERTISE_PEER_URLS=\"http:\/\/${LOCAL_INT_IP}:2380\"/g"    /etc/default/etcd
 sed -i "s/^.*ETCD_ADVERTISE_CLIENT_URLS=.*$/ETCD_ADVERTISE_CLIENT_URLS=\"http:\/\/${LOCAL_INT_IP}:2379\"/g"    /etc/default/etcd
 sed -i "s/^.*ETCD_LISTEN_PEER_URLS=.*$/ETCD_LISTEN_PEER_URLS=\"http:\/\/0.0.0.0:2380\"/g"  /etc/default/etcd
@@ -35,11 +35,11 @@ su -s /bin/sh -c "keystone-manage db_sync" keystone
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 keystone-manage bootstrap --bootstrap-password ${KEYSTONE_PASS} \
-  --bootstrap-admin-url http://controller:5000/v3/ \
-  --bootstrap-internal-url http://controller:5000/v3/ \
-  --bootstrap-public-url http://controller:5000/v3/ \
+  --bootstrap-admin-url http://os-controller:5000/v3/ \
+  --bootstrap-internal-url http://os-controller:5000/v3/ \
+  --bootstrap-public-url http://os-controller:5000/v3/ \
   --bootstrap-region-id RegionOne
-echo "ServerName controller" >> /etc/apache2/apache2.conf
+echo "ServerName os-controller" >> /etc/apache2/apache2.conf
 service apache2 restart
 
 # . /home/openstack/admin_openrc
@@ -57,11 +57,11 @@ openstack role add --project service --user glance admin
 openstack service create --name glance \
   --description "OpenStack Image" image
 openstack endpoint create --region RegionOne \
-  image public http://controller:9292
+  image public http://os-controller:9292
 openstack endpoint create --region RegionOne \
-  image internal http://controller:9292
+  image internal http://os-controller:9292
 openstack endpoint create --region RegionOne \
-  image admin http://controller:9292
+  image admin http://os-controller:9292
 
 # get glance endpoint id
 GLANCE_ENDPOINT_ID=$(openstack endpoint list | awk '
@@ -74,9 +74,9 @@ GLANCE_ENDPOINT_ID=$(openstack endpoint list | awk '
 crudini --set /etc/glance/glance-api.conf database connection \
     "mysql+pymysql://glance:${GLANCE_DBPASS}@database/glance"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000"
+    www_authenticate_uri "http://os-controller:5000"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/glance/glance-api.conf keystone_authtoken \
@@ -100,7 +100,7 @@ crudini --set /etc/glance/glance-api.conf glance_store \
 crudini --set /etc/glance/glance-api.conf glance_store \
     filesystem_store_datadir "/var/lib/glance/images/"
 crudini --set /etc/glance/glance-api.conf oslo_limit \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/glance/glance-api.conf oslo_limit \
     auth_type "password"
 crudini --set /etc/glance/glance-api.conf oslo_limit \
@@ -136,18 +136,18 @@ openstack role add --project service --user placement admin
 openstack service create --name placement \
   --description "Placement API" placement
 openstack endpoint create --region RegionOne \
-  placement public http://controller:8778
+  placement public http://os-controller:8778
 openstack endpoint create --region RegionOne \
-  placement admin http://controller:8778
+  placement admin http://os-controller:8778
 openstack endpoint create --region RegionOne \
-  placement internal http://controller:8778
+  placement internal http://os-controller:8778
 
 crudini --set /etc/placement/placement.conf placement_database \
     connection "mysql+pymysql://placement:${PLACEMENT_DBPASS}@database/placement"
 crudini --set /etc/placement/placement.conf api \
     auth_strategy "keystone"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
-    auth_url "http://controller:5000/v3"
+    auth_url "http://os-controller:5000/v3"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/placement/placement.conf keystone_authtoken \
@@ -176,11 +176,11 @@ openstack role add --project service --user neutron admin
 openstack service create --name neutron \
   --description "OpenStack Networking" network
 openstack endpoint create --region RegionOne \
-  network public http://controller:9696
+  network public http://os-controller:9696
 openstack endpoint create --region RegionOne \
-  network internal http://controller:9696
+  network internal http://os-controller:9696
 openstack endpoint create --region RegionOne \
-  network admin http://controller:9696
+  network admin http://os-controller:9696
 
 crudini --set /etc/neutron/neutron.conf database \
     connection "mysql+pymysql://neutron:${NEUTRON_DBPASS}@database/neutron"
@@ -197,9 +197,9 @@ crudini --set /etc/neutron/neutron.conf DEFAULT \
 crudini --set /etc/neutron/neutron.conf DEFAULT \
     notify_nova_on_port_data_changes "true"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000"
+    www_authenticate_uri "http://os-controller:5000"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
@@ -215,7 +215,7 @@ crudini --set /etc/neutron/neutron.conf keystone_authtoken \
 crudini --set /etc/neutron/neutron.conf keystone_authtoken \
     password "${NEUTRON_PASS}"
 crudini --set /etc/neutron/neutron.conf nova \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/neutron/neutron.conf nova \
     auth_type "password"
 crudini --set /etc/neutron/neutron.conf nova \
@@ -251,7 +251,7 @@ crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup \
     enable_ipset "true"
 
 crudini --set /etc/nova/nova.conf neutron \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/nova/nova.conf neutron \
     auth_type "password"
 crudini --set /etc/nova/nova.conf neutron \
@@ -278,11 +278,11 @@ openstack role add --project service --user nova admin
 openstack service create --name nova \
   --description "OpenStack Compute" compute
 openstack endpoint create --region RegionOne \
-  compute public http://controller:8774/v2.1
+  compute public http://os-controller:8774/v2.1
 openstack endpoint create --region RegionOne \
-  compute internal http://controller:8774/v2.1
+  compute internal http://os-controller:8774/v2.1
 openstack endpoint create --region RegionOne \
-  compute admin http://controller:8774/v2.1
+  compute admin http://os-controller:8774/v2.1
 
 crudini --set /etc/nova/nova.conf api_database \
     connection "mysql+pymysql://nova:${NOVA_DBPASS}@database/nova_api"
@@ -295,9 +295,9 @@ crudini --set /etc/nova/nova.conf DEFAULT \
 crudini --set /etc/nova/nova.conf api \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000/"
+    www_authenticate_uri "http://os-controller:5000/"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    auth_url "http://controller:5000/"
+    auth_url "http://os-controller:5000/"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
@@ -316,9 +316,9 @@ crudini --set /etc/nova/nova.conf keystone_authtoken \
 crudini --set /etc/nova/nova.conf service_user \
     send_service_user_token "true"
 # crudini --set /etc/nova/nova.conf service_user \
-#     auth_url "https://controller/identity"
+#     auth_url "https://os-controller/identity"
 crudini --set /etc/nova/nova.conf service_user \
-    auth_url "http://controller:5000/identity"
+    auth_url "http://os-controller:5000/identity"
 crudini --set /etc/nova/nova.conf service_user \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf service_user \
@@ -342,7 +342,7 @@ crudini --set /etc/nova/nova.conf vnc \
     server_proxyclient_address "\$my_ip"
 
 crudini --set /etc/nova/nova.conf glance \
-    api_servers "http://controller:9292"
+    api_servers "http://os-controller:9292"
 crudini --set /etc/nova/nova.conf oslo_concurrency \
     lock_path "/var/lib/nova/tmp"
 
@@ -357,7 +357,7 @@ crudini --set /etc/nova/nova.conf placement \
 crudini --set /etc/nova/nova.conf placement \
     user_domain_name "Default"
 crudini --set /etc/nova/nova.conf placement \
-    auth_url "http://controller:5000/v3"
+    auth_url "http://os-controller:5000/v3"
 crudini --set /etc/nova/nova.conf placement \
     username "placement"
 crudini --set /etc/nova/nova.conf placement \
@@ -388,11 +388,11 @@ openstack role add --project service --user cinder admin
 openstack service create --name cinderv3 \
   --description "OpenStack Block Storage" volumev3
 openstack endpoint create --region RegionOne \
-  volumev3 public http://controller:8776/v3/%\(project_id\)s
+  volumev3 public http://os-controller:8776/v3/%\(project_id\)s
 openstack endpoint create --region RegionOne \
-  volumev3 internal http://controller:8776/v3/%\(project_id\)s
+  volumev3 internal http://os-controller:8776/v3/%\(project_id\)s
 openstack endpoint create --region RegionOne \
-  volumev3 admin http://controller:8776/v3/%\(project_id\)s
+  volumev3 admin http://os-controller:8776/v3/%\(project_id\)s
 
 crudini --set /etc/cinder/cinder.conf database \
     connection "mysql+pymysql://cinder:${CINDER_DBPASS}@database/cinder"
@@ -405,9 +405,9 @@ crudini --set /etc/cinder/cinder.conf DEFAULT \
     my_ip "${LOCAL_INT_IP}"
 
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000"
+    www_authenticate_uri "http://os-controller:5000"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \

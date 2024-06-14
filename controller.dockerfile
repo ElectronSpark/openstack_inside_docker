@@ -21,7 +21,7 @@ RUN add-apt-repository cloud-archive:yoga -y
 # configure NTP
 # RUN apt install -y chrony 
 # RUN sed -i "/^pool .* iburst maxsources [0-9]$/d" /etc/chrony/chrony.conf
-# RUN echo "server controller iburst" >> /etc/chrony/chrony.conf
+# RUN echo "server os-controller iburst" >> /etc/chrony/chrony.conf
 # RUN service chrony restart
 
 # install memcached
@@ -51,7 +51,6 @@ RUN apt install -y iputils-ping tcpdump
 RUN apt install -y net-tools
 RUN apt install -y vim
 
-ADD --chown=root:root controller_sql.sql /root/controller_sql.sql
 ADD --chown=openstack:openstack admin_openrc /home/openstack/admin_openrc
 ADD --chown=openstack:openstack demo_openrc /home/openstack/demo_openrc
 ADD --chown=root:root ./controller_setup.sh /root/controller_setup.sh

@@ -22,12 +22,12 @@ crudini --set /etc/cinder/cinder.conf DEFAULT \
 crudini --set /etc/cinder/cinder.conf DEFAULT \
     enabled_backends "nfs"
 crudini --set /etc/cinder/cinder.conf DEFAULT \
-    glance_api_servers "http://controller:9292"
+    glance_api_servers "http://os-controller:9292"
 
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000"
+    www_authenticate_uri "http://os-controller:5000"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/cinder/cinder.conf keystone_authtoken \

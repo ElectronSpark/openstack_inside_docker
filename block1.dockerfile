@@ -26,7 +26,7 @@ RUN add-apt-repository cloud-archive:yoga -y
 # configure NTP
 # RUN apt install -y chrony 
 # RUN sed -i "/^pool .* iburst maxsources [0-9]$/d" /etc/chrony/chrony.conf
-# RUN echo "server controller iburst" >> /etc/chrony/chrony.conf
+# RUN echo "server os-controller iburst" >> /etc/chrony/chrony.conf
 # RUN service chrony restart
 
 RUN apt install -y thin-provisioning-tools cinder-volume nfs-common

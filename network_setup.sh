@@ -63,7 +63,7 @@ crudini --set /etc/neutron/dhcp_agent.ini DEFAULT \
     enable_isolated_metadata "true"
 
 crudini --set /etc/neutron/metadata_agent.ini DEFAULT \
-    nova_metadata_host "controller"
+    nova_metadata_host "os-controller"
 crudini --set /etc/neutron/metadata_agent.ini DEFAULT \
     metadata_proxy_shared_secret "${NOVA_METADATA_SECRET}"
 

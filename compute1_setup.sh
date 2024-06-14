@@ -51,7 +51,7 @@ crudini --set /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup \
     firewall_driver "openvswitch"
 
 crudini --set /etc/nova/nova.conf neutron \
-    auth_url "http://controller:5000"
+    auth_url "http://os-controller:5000"
 crudini --set /etc/nova/nova.conf neutron \
     auth_type "password"
 crudini --set /etc/nova/nova.conf neutron \
@@ -76,9 +76,9 @@ crudini --set /etc/nova/nova.conf DEFAULT \
 crudini --set /etc/nova/nova.conf api \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    www_authenticate_uri "http://controller:5000/"
+    www_authenticate_uri "http://os-controller:5000/"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
-    auth_url "http://controller:5000/"
+    auth_url "http://os-controller:5000/"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
     memcached_servers "memcached_server:11211"
 crudini --set /etc/nova/nova.conf keystone_authtoken \
@@ -97,9 +97,9 @@ crudini --set /etc/nova/nova.conf keystone_authtoken \
 crudini --set /etc/nova/nova.conf service_user \
     send_service_user_token "true"
 # crudini --set /etc/nova/nova.conf service_user \
-#     auth_url "https://controller/identity"
+#     auth_url "https://os-controller/identity"
 crudini --set /etc/nova/nova.conf service_user \
-    auth_url "http://controller:5000/identity"
+    auth_url "http://os-controller:5000/identity"
 crudini --set /etc/nova/nova.conf service_user \
     auth_strategy "keystone"
 crudini --set /etc/nova/nova.conf service_user \
@@ -125,7 +125,7 @@ crudini --set /etc/nova/nova.conf vnc \
     novncproxy_base_url "http://localhost:6080/vnc_auto.html"
 
 crudini --set /etc/nova/nova.conf glance \
-    api_servers "http://controller:9292"
+    api_servers "http://os-controller:9292"
 
 crudini --set /etc/nova/nova.conf oslo_concurrency \
     lock_path "/var/lib/nova/tmp"
@@ -141,7 +141,7 @@ crudini --set /etc/nova/nova.conf placement \
 crudini --set /etc/nova/nova.conf placement \
     user_domain_name "Default"
 crudini --set /etc/nova/nova.conf placement \
-    auth_url "http://controller:5000/v3"
+    auth_url "http://os-controller:5000/v3"
 crudini --set /etc/nova/nova.conf placement \
     username "placement"
 crudini --set /etc/nova/nova.conf placement \
